@@ -1,0 +1,112 @@
+package com.example.procareerv2.data.local
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import com.example.procareerv2.domain.model.User
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
+import kotlinx.coroutines.runBlocking
+
+private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "procareer_prefs")
+
+@Singleton
+class PreferencesManager @Inject constructor(
+    private val context: Context
+) {
+    private val dataStore = context.dataStore
+
+    companion object {
+        private val USER_ID = intPreferencesKey("user_id")
+        private val USER_NAME = stringPreferencesKey("user_name")
+        private val USER_EMAIL = stringPreferencesKey("user_email")
+        private val USER_TOKEN = stringPreferencesKey("user_token")
+        private val USER_PROFILE_IMAGE = stringPreferencesKey("user_profile_image")
+        private val USER_POSITION = stringPreferencesKey("user_position")
+        private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
+    }
+
+    suspend fun saveUser(user: User) {
+        dataStore.edit { preferences ->
+            preferences[USER_ID] = user.id
+            preferences[USER_NAME] = user.name
+            preferences[USER_EMAIL] = user.email
+            preferences[USER_TOKEN] = user.token
+            user.profileImage?.let { preferences[USER_PROFILE_IMAGE] = it }
+            user.position?.let { preferences[USER_POSITION] = it }
+        }
+    }
+
+    fun getUserFlow(): Flow<User?> {
+        return dataStore.data.map { preferences ->
+            if (preferences[USER_ID] != null) {
+                User(
+                    id = preferences[USER_ID] ?: -1,
+                    name = preferences[USER_NAME] ?: "",
+                    email = preferences[USER_EMAIL] ?: "",
+                    token = preferences[USER_TOKEN] ?: "",
+                    profileImage = preferences[USER_PROFILE_IMAGE],
+                    position = preferences[USER_POSITION]
+                )
+            } else {
+                null
+            }
+        }
+    }
+
+    suspend fun getUser(): User? {
+        var user: User? = null
+        dataStore.data.map { preferences ->
+            if (preferences[USER_ID] != null) {
+                user = User(
+                    id = preferences[USER_ID] ?: -1,
+                    name = preferences[USER_NAME] ?: "",
+                    email = preferences[USER_EMAIL] ?: "",
+                    token = preferences[USER_TOKEN] ?: "",
+                    profileImage = preferences[USER_PROFILE_IMAGE],
+                    position = preferences[USER_POSITION]
+                )
+            }
+        }.collect { }
+        return user
+    }
+
+    suspend fun clearUser() {
+        dataStore.edit { preferences ->
+            preferences.remove(USER_ID)
+            preferences.remove(USER_NAME)
+            preferences.remove(USER_EMAIL)
+            preferences.remove(USER_TOKEN)
+            preferences.remove(USER_PROFILE_IMAGE)
+            preferences.remove(USER_POSITION)
+        }
+    }
+
+    // Add this method to check if it's the first launch
+    suspend fun isFirstLaunch(): Boolean {
+        val preferences = dataStore.data.first()  // Получаем данные асинхронно
+        val isFirst = preferences[IS_FIRST_LAUNCH] ?: true
+
+        // Сразу обновляем значение для следующего запуска
+        dataStore.edit { preferences ->
+            preferences[IS_FIRST_LAUNCH] = false
+        }
+
+        return isFirst
+    }
+
+    // Optional: Add a method to reset the first launch state (useful for testing)
+    suspend fun resetFirstLaunch() {
+        dataStore.edit { preferences ->
+            preferences[IS_FIRST_LAUNCH] = true
+        }
+    }
+}
