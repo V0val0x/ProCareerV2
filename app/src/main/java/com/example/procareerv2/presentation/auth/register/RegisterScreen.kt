@@ -30,6 +30,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -37,6 +38,13 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.R
 import com.example.procareerv2.presentation.common.components.ProCareerButton
 import com.example.procareerv2.presentation.common.components.ProCareerTextField
+import android.content.Context
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.example.procareerv2.util.NetworkUtils
 
 @Composable
 fun RegisterScreen(
@@ -44,8 +52,30 @@ fun RegisterScreen(
     onRegisterSuccess: () -> Unit,
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val showNoInternetDialog = remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
     var selectedTabIndex by remember { mutableStateOf(1) }
+
+    LaunchedEffect(key1 = true) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            showNoInternetDialog.value = true
+        }
+    }
+
+    // Диалог отсутствия интернета
+    if (showNoInternetDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showNoInternetDialog.value = false },
+            title = { Text("Нет подключения к интернету") },
+            text = { Text("Для регистрации в приложении требуется подключение к интернету. Пожалуйста, проверьте ваше соединение и попробуйте снова.") },
+            confirmButton = {
+                Button(onClick = { showNoInternetDialog.value = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
     LaunchedEffect(uiState.isRegistered) {
         if (uiState.isRegistered) {
@@ -56,28 +86,33 @@ fun RegisterScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo
+        // Фиксированная верхняя часть - одинаковая для обоих экранов
+        Spacer(modifier = Modifier.height(48.dp)) // Фиксированный отступ сверху
+
+        // Логотип - фиксированный размер и отступы
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(80.dp)
-                .padding(top = 32.dp, bottom = 16.dp)
+                .size(160.dp)
+                .padding(bottom = 16.dp)
         )
 
-        // App name
+        // Название приложения - фиксированный стиль и отступы
         Text(
             text = "ProКарьеру",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold
+            ),
             color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(40.dp)) // Фиксированный отступ
 
-        // Tabs
+        // Вкладки - фиксированное положение
         TabRow(
             selectedTabIndex = selectedTabIndex,
             containerColor = MaterialTheme.colorScheme.background,
@@ -89,15 +124,30 @@ fun RegisterScreen(
                     selectedTabIndex = 0
                     onNavigateToLogin()
                 },
-                text = { Text("Войти") }
+                text = {
+                    Text(
+                        "Войти",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    )
+                }
             )
             Tab(
                 selected = selectedTabIndex == 1,
                 onClick = { selectedTabIndex = 1 },
-                text = { Text("Регистрация") }
+                text = {
+                    Text(
+                        "Регистрация",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                        )
+                    )
+                }
             )
         }
 
+        // Изменяемая часть - содержимое экрана регистрации
         Spacer(modifier = Modifier.height(32.dp))
 
         // Name field
@@ -111,7 +161,8 @@ fun RegisterScreen(
                 imeAction = ImeAction.Next
             ),
             isError = uiState.nameError != null,
-            errorMessage = uiState.nameError
+            errorMessage = uiState.nameError,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -127,7 +178,8 @@ fun RegisterScreen(
                 imeAction = ImeAction.Next
             ),
             isError = uiState.emailError != null,
-            errorMessage = uiState.emailError
+            errorMessage = uiState.emailError,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -144,7 +196,8 @@ fun RegisterScreen(
                 imeAction = ImeAction.Done
             ),
             isError = uiState.passwordError != null,
-            errorMessage = uiState.passwordError
+            errorMessage = uiState.passwordError,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(32.dp))
@@ -153,23 +206,28 @@ fun RegisterScreen(
         ProCareerButton(
             text = "Регистрация",
             onClick = { viewModel.register() },
-            enabled = !uiState.isLoading
+            enabled = !uiState.isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         // Login prompt
         Row(
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Есть аккаунт? ",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyLarge
             )
             Text(
                 text = "Войти",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { onNavigateToLogin() }
             )

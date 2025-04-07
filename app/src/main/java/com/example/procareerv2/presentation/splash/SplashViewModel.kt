@@ -7,6 +7,8 @@ import com.example.procareerv2.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
 import javax.inject.Inject
 
 @HiltViewModel
@@ -16,10 +18,22 @@ class SplashViewModel @Inject constructor(
 ) : ViewModel() {
 
     suspend fun isFirstLaunch(): Boolean {
-        return preferencesManager.isFirstLaunch()
+        return withContext(Dispatchers.IO) {
+            try {
+                preferencesManager.isFirstLaunch()
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 
     suspend fun isLoggedIn(): Boolean {
-        return authRepository.isLoggedIn()
+        return withContext(Dispatchers.IO) {
+            try {
+                authRepository.isLoggedIn()
+            } catch (e: Exception) {
+                false
+            }
+        }
     }
 }

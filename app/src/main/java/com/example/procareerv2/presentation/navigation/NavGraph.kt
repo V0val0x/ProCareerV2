@@ -42,7 +42,7 @@ sealed class Screen(val route: String) {
 fun NavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val userState by authViewModel.user.collectAsState()
-    val startDestination = if (userState != null) Screen.Home.route else Screen.Home.route
+    val startDestination = Screen.Splash.route
 
     NavHost(
         navController = navController,
@@ -57,6 +57,11 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Splash.route) { inclusive = true }
                     }
                 }
@@ -128,8 +133,20 @@ fun NavGraph(navController: NavHostController) {
                 onNavigateToVacancyDetail = { vacancyId ->
                     navController.navigate("vacancy_detail/$vacancyId")
                 },
-                onNavigateBack = {
-                    navController.navigateUp()
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.VacancyList.route) { inclusive = true }
+                    }
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.VacancyList.route) { inclusive = true }
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.VacancyList.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -145,6 +162,26 @@ fun NavGraph(navController: NavHostController) {
                 vacancyId = vacancyId,
                 onNavigateBack = {
                     navController.navigateUp()
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.VacancyList.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVacancies = {
+                    navController.navigate(Screen.VacancyList.route) {
+                        popUpTo(Screen.VacancyDetail.route) { inclusive = true }
+                    }
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.VacancyDetail.route) { inclusive = true }
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.VacancyDetail.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -154,8 +191,20 @@ fun NavGraph(navController: NavHostController) {
                 onNavigateToTestDetail = { testId ->
                     navController.navigate("test_detail/$testId")
                 },
-                onNavigateBack = {
-                    navController.navigateUp()
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.TestList.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVacancies = {
+                    navController.navigate(Screen.VacancyList.route) {
+                        popUpTo(Screen.TestList.route) { inclusive = true }
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.TestList.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -194,19 +243,31 @@ fun NavGraph(navController: NavHostController) {
                 }
             )
         }
-/*
-        composable(Screen.Roadmap.route) {
-            RoadmapScreen(
-                onNavigateBack = {
-                    navController.navigateUp()
+        /*
+                composable(Screen.Roadmap.route) {
+                    RoadmapScreen(
+                        onNavigateBack = {
+                            navController.navigateUp()
+                        }
+                    )
                 }
-            )
-        }
-*/
+        */
         composable(Screen.Profile.route) {
             ProfileScreen(
-                onNavigateBack = {
-                    navController.navigateUp()
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVacancies = {
+                    navController.navigate(Screen.VacancyList.route) {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
                 },
                 onLogout = {
                     navController.navigate(Screen.Login.route) {

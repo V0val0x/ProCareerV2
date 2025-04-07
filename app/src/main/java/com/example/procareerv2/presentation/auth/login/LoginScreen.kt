@@ -3,6 +3,7 @@ package com.example.procareerv2.presentation.auth.login
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,8 +16,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Visibility
-import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
@@ -31,16 +30,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.R
 import com.example.procareerv2.presentation.common.components.ProCareerButton
 import com.example.procareerv2.presentation.common.components.ProCareerTextField
+import android.content.Context
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import com.example.procareerv2.util.NetworkUtils
 
 @Composable
 fun LoginScreen(
@@ -48,8 +52,30 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit,
     viewModel: LoginViewModel = hiltViewModel()
 ) {
+    val context = LocalContext.current
+    val showNoInternetDialog = remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
     var selectedTabIndex by remember { mutableStateOf(0) }
+
+    LaunchedEffect(key1 = true) @androidx.annotation.RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE) {
+        if (!NetworkUtils.isNetworkAvailable(context)) {
+            showNoInternetDialog.value = true
+        }
+    }
+
+    // Диалог отсутствия интернета
+    if (showNoInternetDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showNoInternetDialog.value = false },
+            title = { Text("Нет подключения к интернету") },
+            text = { Text("Для входа в приложение требуется подключение к интернету. Пожалуйста, проверьте ваше соединение и попробуйте снова.") },
+            confirmButton = {
+                Button(onClick = { showNoInternetDialog.value = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
 
     LaunchedEffect(uiState.isLoggedIn) {
         if (uiState.isLoggedIn) {
@@ -60,28 +86,33 @@ fun LoginScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Logo
+        // Фиксированная верхняя часть - одинаковая для обоих экранов
+        Spacer(modifier = Modifier.height(48.dp)) // Фиксированный отступ сверху
+
+        // Логотип - фиксированный размер и отступы
         Image(
             painter = painterResource(id = R.drawable.logo),
             contentDescription = "App Logo",
             modifier = Modifier
-                .size(80.dp)
-                .padding(top = 32.dp, bottom = 16.dp)
+                .size(160.dp)
+                .padding(bottom = 16.dp)
         )
 
-        // App name
+        // Название приложения - фиксированный стиль и отступы
         Text(
             text = "ProКарьеру",
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.headlineMedium.copy(
+                fontWeight = FontWeight.Bold
+            ),
             color = MaterialTheme.colorScheme.primary
         )
 
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(40.dp)) // Фиксированный отступ
 
-        // Tabs
+        // Вкладки - фиксированное положение
         TabRow(
             selectedTabIndex = selectedTabIndex,
             containerColor = MaterialTheme.colorScheme.background,
@@ -90,7 +121,14 @@ fun LoginScreen(
             Tab(
                 selected = selectedTabIndex == 0,
                 onClick = { selectedTabIndex = 0 },
-                text = { Text("Войти") }
+                text = {
+                    Text(
+                        "Войти",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    )
+                }
             )
             Tab(
                 selected = selectedTabIndex == 1,
@@ -98,10 +136,18 @@ fun LoginScreen(
                     selectedTabIndex = 1
                     onNavigateToRegister()
                 },
-                text = { Text("Регистрация") }
+                text = {
+                    Text(
+                        "Регистрация",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                        )
+                    )
+                }
             )
         }
 
+        // Изменяемая часть - содержимое экрана входа
         Spacer(modifier = Modifier.height(32.dp))
 
         // Email field
@@ -115,7 +161,8 @@ fun LoginScreen(
                 imeAction = ImeAction.Next
             ),
             isError = uiState.emailError != null,
-            errorMessage = uiState.emailError
+            errorMessage = uiState.emailError,
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -132,7 +179,8 @@ fun LoginScreen(
                 imeAction = ImeAction.Done
             ),
             isError = uiState.passwordError != null,
-            errorMessage = uiState.passwordError
+            errorMessage = uiState.passwordError,
+            modifier = Modifier.fillMaxWidth()
         )
 
         // Forgot password
@@ -144,8 +192,8 @@ fun LoginScreen(
         ) {
             Text(
                 text = "Забыли пароль?",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.secondary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { /* Handle forgot password */ }
             )
         }
@@ -156,23 +204,28 @@ fun LoginScreen(
         ProCareerButton(
             text = "Войти",
             onClick = { viewModel.login() },
-            enabled = !uiState.isLoading
+            enabled = !uiState.isLoading,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
         )
 
         Spacer(modifier = Modifier.weight(1f))
 
         // Register prompt
         Row(
-            modifier = Modifier.padding(bottom = 16.dp),
+            modifier = Modifier.padding(bottom = 24.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = "Нет аккаунта? ",
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyLarge
             )
             Text(
                 text = "Регистрация",
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable { onNavigateToRegister() }
             )
