@@ -16,9 +16,9 @@ class VacancyRepositoryImpl @Inject constructor(
                 Vacancy(
                     id = dto.id,
                     title = dto.title,
-                    level = dto.level,
-                    tags = dto.tags,
-                    description = dto.description,
+                    grade = dto.grade,
+                    //tags = dto.tags,
+                    //description = dto.description,
                     responsibilities = dto.responsibilities,
                     requirements = dto.requirements,
                     technologies = dto.technologies

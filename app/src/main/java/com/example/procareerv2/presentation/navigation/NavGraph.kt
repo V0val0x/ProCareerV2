@@ -42,7 +42,7 @@ sealed class Screen(val route: String) {
 fun NavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val userState by authViewModel.user.collectAsState()
-    val startDestination = Screen.Splash.route
+    val startDestination = Screen.Home.route
 
     NavHost(
         navController = navController,

@@ -153,13 +153,13 @@ fun TestQuestionScreen(
                         LazyColumn(
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            items(question.answers) { answer ->
+                            /*items(question.answers) { answer ->
                                 AnswerItem(
                                     answer = answer,
                                     isSelected = uiState.selectedAnswerId == answer.id,
                                     onClick = { viewModel.selectAnswer(answer.id) }
                                 )
-                            }
+                            }*/
                         }
 
                         Spacer(modifier = Modifier.weight(1f))

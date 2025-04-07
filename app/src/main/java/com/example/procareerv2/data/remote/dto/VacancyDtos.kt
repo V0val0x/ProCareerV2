@@ -9,8 +9,8 @@ data class VacancyListResponse(
 data class VacancyDto(
     val id: Int,
     val title: String,
-    val level: String,
-    val tags: List<String>,
+    val grade: String,
+    //val tags: List<String>,
     val description: String? = null,
     val responsibilities: List<String>? = null,
     val requirements: List<String>? = null,

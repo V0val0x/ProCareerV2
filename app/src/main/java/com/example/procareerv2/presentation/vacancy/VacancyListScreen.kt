@@ -186,7 +186,7 @@ fun VacancyItem(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
                             .background(
-                                when (vacancy.level) {
+                                when (vacancy.grade) {
                                     "Intern" -> MaterialTheme.colorScheme.secondary
                                     "Junior" -> MaterialTheme.colorScheme.tertiary
                                     else -> MaterialTheme.colorScheme.primary
@@ -195,7 +195,7 @@ fun VacancyItem(
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = vacancy.level,
+                            text = vacancy.grade,
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.White
                         )
@@ -218,7 +218,7 @@ fun VacancyItem(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                vacancy.tags.forEach { tag ->
+                /*vacancy.tags.forEach { tag ->
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(16.dp))
@@ -230,7 +230,7 @@ fun VacancyItem(
                             style = MaterialTheme.typography.bodySmall
                         )
                     }
-                }
+                }*/
             }
         }
     }

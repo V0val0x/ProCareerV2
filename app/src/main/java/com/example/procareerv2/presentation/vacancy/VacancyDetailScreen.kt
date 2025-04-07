@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -147,7 +146,7 @@ fun VacancyDetailScreen(
                                 modifier = Modifier
                                     .clip(RoundedCornerShape(16.dp))
                                     .background(
-                                        when (vacancy.level) {
+                                        when (vacancy.grade) {
                                             "Intern" -> MaterialTheme.colorScheme.secondary
                                             "Junior" -> MaterialTheme.colorScheme.tertiary
                                             else -> MaterialTheme.colorScheme.primary
@@ -156,7 +155,7 @@ fun VacancyDetailScreen(
                                     .padding(horizontal = 8.dp, vertical = 4.dp)
                             ) {
                                 Text(
-                                    text = vacancy.level,
+                                    text = vacancy.grade,
                                     style = MaterialTheme.typography.bodySmall,
                                     color = Color.White
                                 )

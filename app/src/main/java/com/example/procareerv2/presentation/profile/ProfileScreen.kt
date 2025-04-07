@@ -111,7 +111,7 @@ fun ProfileScreen(
                     .clip(RoundedCornerShape(24.dp))
                     .background(MaterialTheme.colorScheme.primaryContainer)
             ) {
-                // Здесь можно добавить фоновое изображение для шапки профиля
+                // Здесь можно будет добавить фоновое изображение для шапки профиля
 
                 // Profile image
                 Box(
