@@ -60,7 +60,7 @@ fun HomeScreen(
                 .padding(paddingValues)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp) // Увеличиваем расстояние между карточками
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
             // Заголовок
             Text(

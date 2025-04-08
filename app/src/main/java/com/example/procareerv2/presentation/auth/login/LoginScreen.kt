@@ -94,20 +94,11 @@ fun LoginScreen(
 
         // Логотип - фиксированный размер и отступы
         Image(
-            painter = painterResource(id = R.drawable.logo),
+            painter = painterResource(id = R.drawable.logo2),
             contentDescription = "App Logo",
             modifier = Modifier
                 .size(160.dp)
                 .padding(bottom = 16.dp)
-        )
-
-        // Название приложения - фиксированный стиль и отступы
-        Text(
-            text = "ProКарьеру",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold
-            ),
-            color = MaterialTheme.colorScheme.primary
         )
 
         Spacer(modifier = Modifier.height(40.dp)) // Фиксированный отступ
@@ -124,7 +115,7 @@ fun LoginScreen(
                 text = {
                     Text(
                         "Войти",
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
                         )
                     )
@@ -139,7 +130,7 @@ fun LoginScreen(
                 text = {
                     Text(
                         "Регистрация",
-                        style = MaterialTheme.typography.titleMedium.copy(
+                        style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
                         )
                     )

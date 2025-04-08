@@ -167,7 +167,7 @@ fun VacancyDetailScreen(
                         // Description
                         vacancy.description?.let {
                             Text(
-                                text = "Fair Pricing (FP) – автоматизированная программа индивидуального ценообразования по продуктам",
+                                text = it,
                                 style = MaterialTheme.typography.bodyLarge
                             )
 
