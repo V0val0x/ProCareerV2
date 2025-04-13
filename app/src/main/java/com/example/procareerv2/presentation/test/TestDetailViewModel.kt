@@ -28,8 +28,6 @@ class TestDetailViewModel @Inject constructor(
 
     fun loadTest(testId: Int) {
         viewModelScope.launch {
-            // In a real app, you would fetch a specific test by ID
-            // For this example, we'll just get all tests and find the one with matching ID
             testRepository.getTests()
                 .onSuccess { tests ->
                     val test = tests.find { it.id == testId }
@@ -56,7 +54,6 @@ class TestDetailViewModel @Inject constructor(
     }
 
     fun startTest() {
-        // This would be called when the user clicks the start button
-        // In a real app, you might want to do some preparation here
+        // TO DO
     }
 }

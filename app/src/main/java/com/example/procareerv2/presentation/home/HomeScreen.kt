@@ -32,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.procareerv2.R
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
+import com.example.procareerv2.presentation.common.components.ProCareerTopBar
 
 @Composable
 fun HomeScreen(
@@ -43,6 +44,12 @@ fun HomeScreen(
     var selectedTab by remember { mutableStateOf(0) }
 
     Scaffold(
+        topBar = {
+            ProCareerTopBar(
+                title = "ProCareer",
+                subtitle = "Развивай свою карьеру"
+            )
+        },
         bottomBar = {
             ProCareerBottomBar(
                 selectedTab = selectedTab,
@@ -62,17 +69,6 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // Заголовок
-            Text(
-                text = "ProКарьеру",
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp)
-            )
 
             // Vacancies card
             Card(
