@@ -19,13 +19,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -49,14 +52,39 @@ fun TestQuestionScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(key1 = testId) {
-        viewModel.startTest(testId)
+    if (uiState.isTestCompleted) {
+        TestResultScreen(
+            correctAnswers = uiState.correctAnswers,
+            totalQuestions = uiState.totalQuestions,
+            onFinish = onFinishTest
+        )
+        return
+    }
+
+    LaunchedEffect(Unit) {
+        println("[TestQuestionScreen] LaunchedEffect triggered with testId=$testId")
+        if (testId > 0) {
+            println("[TestQuestionScreen] Starting test with id=$testId")
+            viewModel.startTest(testId)
+        } else {
+            println("[TestQuestionScreen] Invalid testId: $testId")
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Вопрос ${uiState.currentQuestionIndex + 1} из ${uiState.totalQuestions}") },
+                title = { 
+                    if (uiState.isLoading) {
+                        Text("Загрузка теста...")
+                    } else if (uiState.error != null) {
+                        Text("Ошибка")
+                    } else if (uiState.currentQuestionIndex >= 0) {
+                        Text("Вопрос ${uiState.currentQuestionIndex + 1} из ${uiState.totalQuestions}")
+                    } else {
+                        Text("Подготовка теста...")
+                    }
+                },
                 navigationIcon = {
                     IconButton(onClick = { /* Handle back navigation */ }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -144,22 +172,26 @@ fun TestQuestionScreen(
                     uiState.currentQuestion?.let { question ->
                         Text(
                             text = question.question,
-                            style = MaterialTheme.typography.headlineSmall
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.padding(vertical = 16.dp)
                         )
 
                         Spacer(modifier = Modifier.height(24.dp))
 
                         // Answers
                         LazyColumn(
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            /*items(question.answers) { answer ->
-                                AnswerItem(
-                                    answer = answer,
-                                    isSelected = uiState.selectedAnswerId == answer.id,
-                                    onClick = { viewModel.selectAnswer(answer.id) }
-                                )
-                            }*/
+                            question.answers?.let { answers ->
+                                items(answers) { answer ->
+                                    AnswerItem(
+                                        answer = answer,
+                                        isSelected = uiState.selectedAnswerId == answer.id,
+                                        onClick = { viewModel.selectAnswer(answer.id) }
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.weight(1f))
@@ -167,12 +199,21 @@ fun TestQuestionScreen(
                         // Next button
                         Button(
                             onClick = { viewModel.nextQuestion() },
-                            modifier = Modifier.fillMaxWidth(),
-                            enabled = uiState.selectedAnswerId != null
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 16.dp)
+                                .height(56.dp),
+                            enabled = uiState.selectedAnswerId != null,
+                            shape = RoundedCornerShape(16.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                                disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
+                            )
                         ) {
                             Text(
                                 text = if (uiState.currentQuestionIndex == uiState.totalQuestions - 1)
-                                    "Завершить" else "Следующий вопрос"
+                                    "Завершить" else "Следующий вопрос",
+                                style = MaterialTheme.typography.titleMedium
                             )
                         }
                     }
@@ -194,25 +235,40 @@ fun AnswerItem(
             .clickable(onClick = onClick)
             .border(
                 width = if (isSelected) 2.dp else 1.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.LightGray,
-                shape = RoundedCornerShape(8.dp)
-            )
+                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                shape = RoundedCornerShape(16.dp)
+            ),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isSelected) 
+                MaterialTheme.colorScheme.primaryContainer 
+                else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected) 4.dp else 1.dp
+        )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             RadioButton(
                 selected = isSelected,
-                onClick = onClick
+                onClick = onClick,
+                colors = RadioButtonDefaults.colors(
+                    selectedColor = MaterialTheme.colorScheme.primary,
+                    unselectedColor = MaterialTheme.colorScheme.outline
+                )
             )
 
             Text(
                 text = answer.answer,
                 style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(start = 8.dp)
+                color = if (isSelected) 
+                    MaterialTheme.colorScheme.onPrimaryContainer 
+                    else MaterialTheme.colorScheme.onSurface
             )
         }
     }

@@ -33,7 +33,9 @@ sealed class Screen(val route: String) {
     object VacancyDetail : Screen("vacancy_detail/{vacancyId}")
     object TestList : Screen("test_list")
     object TestDetail : Screen("test_detail/{testId}")
-    object TestQuestion : Screen("test_question/{testId}")
+    object TestQuestion : Screen("test_question/{testId}") {
+        fun createRoute(testId: Int) = "test_question/$testId"
+    }
     object Roadmap : Screen("roadmap")
     object Profile : Screen("profile")
 }
@@ -42,7 +44,7 @@ sealed class Screen(val route: String) {
 fun NavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val userState by authViewModel.user.collectAsState()
-    val startDestination = Screen.Splash.route
+    val startDestination = Screen.Home.route
 
     NavHost(
         navController = navController,
@@ -219,7 +221,7 @@ fun NavGraph(navController: NavHostController) {
             TestDetailScreen(
                 testId = testId,
                 onStartTest = {
-                    navController.navigate("test_question/$testId")
+                    navController.navigate(Screen.TestQuestion.createRoute(testId))
                 },
                 onNavigateBack = {
                     navController.navigateUp()

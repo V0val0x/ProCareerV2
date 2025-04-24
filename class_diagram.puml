@@ -1,0 +1,137 @@
+@startuml ProCareerV2
+
+' Стили для более четкого отображения
+skinparam classAttributeIconSize 0
+skinparam class {
+    BackgroundColor White
+    ArrowColor Black
+    BorderColor Black
+}
+
+package "Domain Layer" {
+    ' Модели данных
+    class User {
+        -id: Int
+        -name: String
+        -email: String
+        -token: String
+        -profileImage: String
+        -position: String
+    }
+
+    class Vacancy {
+        -id: Int
+        -title: String
+        -grade: String
+        -description: String
+        -responsibilities: List<String>
+        -requirements: List<String>
+        -technologies: List<String>
+    }
+
+    class Test {
+        -id: Int
+        -title: String
+        -duration: Int
+        -numberOfQuestions: Int
+    }
+
+    class Question {
+        -id: Int
+        -question: String
+        -answers: List<Answer>
+    }
+
+    class Answer {
+        -id: Int
+        -answer: String
+        -isRight: Boolean
+    }
+
+    ' Интерфейсы репозиториев
+    interface AuthRepository {
+        +login(email: String, password: String): Result<User>
+        +register(name: String, email: String, password: String): Result<User>
+        +getUserFlow(): Flow<User?>
+        +logout()
+        +isLoggedIn(): Boolean
+    }
+
+    interface TestRepository {
+        +getTests(): Result<List<Test>>
+        +startTest(testId: Int, userId: Int): Result<List<Question>>
+        +submitTestResults(testId: Int, userId: Int, correctAnswers: Int): Result<Unit>
+    }
+
+    interface VacancyRepository {
+        +getVacancies(): Result<List<Vacancy>>
+    }
+}
+
+package "Data Layer" {
+    class AuthRepositoryImpl implements AuthRepository {
+        -apiService: AuthApi
+        -preferencesManager: PreferencesManager
+    }
+
+    class TestRepositoryImpl implements TestRepository {
+        -apiService: TestApi
+    }
+
+    class VacancyRepositoryImpl implements VacancyRepository {
+        -apiService: VacancyApi
+    }
+}
+
+package "Presentation Layer" {
+    class AuthViewModel {
+        -authRepository: AuthRepository
+        +loginState: StateFlow<LoginState>
+        +login(email: String, password: String)
+        +register(name: String, email: String, password: String)
+        +logout()
+    }
+
+    class TestListViewModel {
+        -testRepository: TestRepository
+        +testsState: StateFlow<TestsState>
+        +loadTests()
+    }
+
+    class TestDetailViewModel {
+        -testRepository: TestRepository
+        +testState: StateFlow<TestState>
+        +startTest(testId: Int)
+        +submitTest(correctAnswers: Int)
+    }
+
+    class TestQuestionViewModel {
+        -questions: List<Question>
+        +currentQuestionState: StateFlow<QuestionState>
+        +nextQuestion()
+        +submitAnswer(answerId: Int)
+    }
+
+    class VacancyListViewModel {
+        -vacancyRepository: VacancyRepository
+        +vacanciesState: StateFlow<VacanciesState>
+        +loadVacancies()
+    }
+}
+
+' Отношения между классами
+Test "1" *-- "*" Question
+Question "1" *-- "*" Answer
+
+' Зависимости ViewModels от репозиториев
+AuthViewModel ..> AuthRepository
+TestListViewModel ..> TestRepository
+TestDetailViewModel ..> TestRepository
+VacancyListViewModel ..> VacancyRepository
+
+' Зависимости репозиториев от API
+AuthRepositoryImpl ..> "uses" AuthApi
+TestRepositoryImpl ..> "uses" TestApi
+VacancyRepositoryImpl ..> "uses" VacancyApi
+
+@enduml

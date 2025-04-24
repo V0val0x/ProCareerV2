@@ -9,12 +9,14 @@ data class TestListResponse(
 data class TestDto(
     val id: Int,
     val title: String,
-    val duration: Int
+    val description: String?,
+    val average_passing_time: Int?,
+    val id_skill: Int?
 )
 
 data class StartTestRequest(
-    val id_test: Int,
-    val id_user: Int
+    val id_test: Long,  // int64 в Go = Long в Kotlin
+    val id_user: Long   // int64 в Go = Long в Kotlin
 )
 
 data class TestResponse(
@@ -24,8 +26,8 @@ data class TestResponse(
 )
 
 data class TestDataDto(
-    val number_of_questions: Int,
-    val questions: List<QuestionDto>
+    val number_of_questions: Int = 0,
+    val questions: List<QuestionDto> = emptyList()
 )
 
 data class QuestionDto(
@@ -41,7 +43,7 @@ data class AnswerDto(
 )
 
 data class TestResultRequest(
-    val id_test: Int,
-    val id_user: Int,
-    val number_of_correct_answers: Int
+    val id_test: Long,           // int64 в Go = Long в Kotlin
+    val id_user: Long,           // int64 в Go = Long в Kotlin
+    val number_of_correct_answers: Byte  // int8 в Go = Byte в Kotlin
 )

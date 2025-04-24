@@ -118,10 +118,7 @@ fun TestDetailScreen(
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Button(
-                        onClick = {
-                            viewModel.startTest()
-                            onStartTest()
-                        },
+                        onClick = onStartTest,  // Только навигация, startTest будет вызван в TestQuestionScreen
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text("Начать")

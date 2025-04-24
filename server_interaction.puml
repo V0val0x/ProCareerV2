@@ -1,0 +1,43 @@
+@startuml
+skinparam style strictuml
+skinparam backgroundColor white
+skinparam sequence {
+    ArrowColor #2C3E50
+    LifeLineBorderColor #2C3E50
+    ParticipantBorderColor #2C3E50
+    ParticipantBackgroundColor #ECF0F1
+    BoxBorderColor #2C3E50
+}
+
+participant "App\n(Client)" as app
+participant "OkHttp\nClient" as okhttp
+participant "Retrofit" as retrofit
+participant "Server" as server
+
+== HTTP Request ==
+app -> retrofit: createRequest()
+activate retrofit
+retrofit -> okhttp: buildRequest()
+activate okhttp
+okhttp -> okhttp: addHeaders()\naddBody()
+okhttp --> retrofit: Request
+deactivate okhttp
+retrofit --> app: Request ready
+deactivate retrofit
+
+app -> okhttp: executeRequest()
+activate okhttp
+okhttp -> server: HTTP Request
+activate server
+server -> server: processRequest()
+server --> okhttp: JSON Response
+deactivate server
+okhttp -> retrofit: rawResponse
+deactivate okhttp
+
+activate retrofit
+retrofit -> retrofit: parseJSON()\nconvertToKotlin()
+retrofit --> app: Kotlin Objects
+deactivate retrofit
+
+@enduml

@@ -7,8 +7,13 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
-import androidx.datastore.preferences.preferencesDataStore
+import androidx.datastore.preferences.core.stringSetPreferencesKey
+import com.example.procareerv2.domain.model.Interest
+import com.example.procareerv2.domain.model.Skill
 import com.example.procareerv2.domain.model.User
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -31,7 +36,10 @@ class PreferencesManager @Inject constructor(
         private val USER_TOKEN = stringPreferencesKey("user_token")
         private val USER_PROFILE_IMAGE = stringPreferencesKey("user_profile_image")
         private val USER_POSITION = stringPreferencesKey("user_position")
+        private val USER_SKILLS = stringPreferencesKey("user_skills")
+        private val USER_INTERESTS = stringPreferencesKey("user_interests")
         private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
+        private val gson = Gson()
     }
 
     suspend fun saveUser(user: User) {
@@ -42,19 +50,30 @@ class PreferencesManager @Inject constructor(
             preferences[USER_TOKEN] = user.token
             user.profileImage?.let { preferences[USER_PROFILE_IMAGE] = it }
             user.position?.let { preferences[USER_POSITION] = it }
+            preferences[USER_SKILLS] = gson.toJson(user.skills)
+            preferences[USER_INTERESTS] = gson.toJson(user.interests)
         }
     }
 
     fun getUserFlow(): Flow<User?> {
         return dataStore.data.map { preferences ->
             if (preferences[USER_ID] != null) {
+                val skillsJson = preferences[USER_SKILLS] ?: "[]"
+                val interestsJson = preferences[USER_INTERESTS] ?: "[]"
+                val skillsType = object : TypeToken<List<Skill>>() {}.type
+                val interestsType = object : TypeToken<List<Interest>>() {}.type
+                val skills = gson.fromJson<List<Skill>>(skillsJson, skillsType)
+                val interests = gson.fromJson<List<Interest>>(interestsJson, interestsType)
+
                 User(
                     id = preferences[USER_ID] ?: -1,
                     name = preferences[USER_NAME] ?: "",
                     email = preferences[USER_EMAIL] ?: "",
                     token = preferences[USER_TOKEN] ?: "",
                     profileImage = preferences[USER_PROFILE_IMAGE],
-                    position = preferences[USER_POSITION]
+                    position = preferences[USER_POSITION],
+                    skills = skills,
+                    interests = interests
                 )
             } else {
                 null
@@ -66,13 +85,22 @@ class PreferencesManager @Inject constructor(
         var user: User? = null
         dataStore.data.map { preferences ->
             if (preferences[USER_ID] != null) {
+                val skillsJson = preferences[USER_SKILLS] ?: "[]"
+                val interestsJson = preferences[USER_INTERESTS] ?: "[]"
+                val skillsType = object : TypeToken<List<Skill>>() {}.type
+                val interestsType = object : TypeToken<List<Interest>>() {}.type
+                val skills = gson.fromJson<List<Skill>>(skillsJson, skillsType)
+                val interests = gson.fromJson<List<Interest>>(interestsJson, interestsType)
+
                 user = User(
                     id = preferences[USER_ID] ?: -1,
                     name = preferences[USER_NAME] ?: "",
                     email = preferences[USER_EMAIL] ?: "",
                     token = preferences[USER_TOKEN] ?: "",
                     profileImage = preferences[USER_PROFILE_IMAGE],
-                    position = preferences[USER_POSITION]
+                    position = preferences[USER_POSITION],
+                    skills = skills,
+                    interests = interests
                 )
             }
         }.collect { }

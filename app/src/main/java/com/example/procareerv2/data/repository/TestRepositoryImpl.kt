@@ -20,7 +20,7 @@ class TestRepositoryImpl @Inject constructor(
                 Test(
                     id = dto.id,
                     title = dto.title,
-                    duration = dto.duration,
+                    duration = dto.average_passing_time ?: 0,
                     numberOfQuestions = 0 // Not provided in the list response
                 )
             }
@@ -32,7 +32,27 @@ class TestRepositoryImpl @Inject constructor(
 
     override suspend fun startTest(testId: Int, userId: Int): Result<List<Question>> {
         return try {
-            val response = testApi.startTest(StartTestRequest(testId, userId))
+            println("[TestRepository] Starting test with testId=$testId, userId=$userId")
+            val request = StartTestRequest(
+                id_test = testId.toLong(),  // Convert Int to Long
+                id_user = userId.toLong()   // Convert Int to Long
+            )
+            println("[TestRepository] Created request: $request")
+            
+            println("[TestRepository] Sending POST request to /tests/start")
+            val response = testApi.startTest(request)
+            println("[TestRepository] Got response: $response")
+            println("[TestRepository] Response data: ${response.data}")
+            println("[TestRepository] Questions count: ${response.data.questions.size}")
+            
+            // Check for API errors
+            if (response.errors.isNotEmpty()) {
+                println("[TestRepository] Error in response: ${response.errors}")
+                return Result.failure(Exception(response.errors))
+            }
+            
+            // Map questions from response
+            println("[TestRepository] Mapping questions from response")
             val questions = response.data.questions.map { questionDto ->
                 Question(
                     id = questionDto.id,
@@ -46,23 +66,30 @@ class TestRepositoryImpl @Inject constructor(
                     }
                 )
             }
+            println("Mapped ${questions.size} questions")
             Result.success(questions)
         } catch (e: Exception) {
+            println("Error starting test: ${e.message}")
             Result.failure(e)
         }
     }
 
     override suspend fun submitTestResults(testId: Int, userId: Int, correctAnswers: Int): Result<Unit> {
+        // Преобразуем типы для соответствия с бэкендом
         return try {
-            testApi.submitTestResults(
-                TestResultRequest(
-                    id_test = testId,
-                    id_user = userId,
-                    number_of_correct_answers = correctAnswers
-                )
+            println("Submitting test results: testId=$testId, userId=$userId, correctAnswers=$correctAnswers")
+            val request = TestResultRequest(
+                id_test = testId.toLong(),  // Int -> Long (int64)
+                id_user = userId.toLong(),   // Int -> Long (int64)
+                number_of_correct_answers = correctAnswers.toByte() // Int -> Byte (int8)
             )
+            println("Sending result request: $request")
+            
+            testApi.submitTestResults(request)
+            println("Test results submitted successfully")
             Result.success(Unit)
         } catch (e: Exception) {
+            println("Error submitting test results: ${e.message}")
             Result.failure(e)
         }
     }
