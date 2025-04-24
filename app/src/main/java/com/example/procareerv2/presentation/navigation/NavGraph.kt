@@ -15,7 +15,8 @@ import com.example.procareerv2.presentation.auth.register.RegisterScreen
 import com.example.procareerv2.presentation.home.HomeScreen
 import com.example.procareerv2.presentation.onboarding.OnboardingScreen
 import com.example.procareerv2.presentation.profile.ProfileScreen
-//import com.example.procareerv2.presentation.roadmap.RoadmapScreen
+import com.example.procareerv2.presentation.roadmap.RoadmapListScreen
+import com.example.procareerv2.presentation.roadmap.RoadmapScreen
 import com.example.procareerv2.presentation.splash.SplashScreen
 import com.example.procareerv2.presentation.test.TestDetailScreen
 import com.example.procareerv2.presentation.test.TestListScreen
@@ -36,7 +37,10 @@ sealed class Screen(val route: String) {
     object TestQuestion : Screen("test_question/{testId}") {
         fun createRoute(testId: Int) = "test_question/$testId"
     }
-    object Roadmap : Screen("roadmap")
+    object RoadmapList : Screen("roadmap_list")
+    object RoadmapDetail : Screen("roadmap/{roadmapId}") {
+        fun createRoute(roadmapId: Int) = "roadmap/$roadmapId"
+    }
     object Profile : Screen("profile")
 }
 
@@ -122,7 +126,7 @@ fun NavGraph(navController: NavHostController) {
                     navController.navigate(Screen.TestList.route)
                 },
                 onNavigateToRoadmap = {
-                    navController.navigate(Screen.Roadmap.route)
+                    navController.navigate(Screen.RoadmapList.route)
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
@@ -245,15 +249,28 @@ fun NavGraph(navController: NavHostController) {
                 }
             )
         }
-        /*
-                composable(Screen.Roadmap.route) {
-                    RoadmapScreen(
-                        onNavigateBack = {
-                            navController.navigateUp()
-                        }
-                    )
+
+        composable(Screen.RoadmapList.route) {
+            RoadmapListScreen(
+                onNavigateToRoadmap = { roadmapId ->
+                    navController.navigate(Screen.RoadmapDetail.createRoute(roadmapId))
                 }
-        */
+            )
+        }
+
+        composable(
+            route = Screen.RoadmapDetail.route,
+            arguments = listOf(
+                navArgument("roadmapId") { type = NavType.IntType }
+            )
+        ) {
+            RoadmapScreen(
+                onNavigateBack = {
+                    navController.navigateUp()
+                }
+            )
+        }
+
         composable(Screen.Profile.route) {
             ProfileScreen(
                 onNavigateToHome = {
