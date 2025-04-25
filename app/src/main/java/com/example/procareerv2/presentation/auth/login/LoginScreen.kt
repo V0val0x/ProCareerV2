@@ -203,23 +203,5 @@ fun LoginScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Register prompt
-        Row(
-            modifier = Modifier.padding(bottom = 24.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Нет аккаунта? ",
-                style = MaterialTheme.typography.bodyLarge
-            )
-            Text(
-                text = "Регистрация",
-                style = MaterialTheme.typography.bodyLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { onNavigateToRegister() }
-            )
-        }
     }
 }
