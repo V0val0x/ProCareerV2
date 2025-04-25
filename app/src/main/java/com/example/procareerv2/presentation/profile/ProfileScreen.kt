@@ -120,10 +120,34 @@ fun ProfileScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(200.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
+                    .clip(RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
+                val context = LocalContext.current
+                val profileImage = uiState.user?.profileImage
+                val imageModel = if (profileImage != null) {
+                    Uri.parse(profileImage)
+                } else {
+                    R.drawable.default_avatar
+                }
+                
+                // Background blur effect
+                Image(
+                    painter = rememberAsyncImagePainter(
+                        model = ImageRequest.Builder(context)
+                            .data(imageModel)
+                            .crossfade(true)
+                            .build()
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f)),
+                    contentScale = ContentScale.Crop,
+                    alpha = 0.3f // Make it semi-transparent
+                )
+                
+                // Profile image
                 Box(
                     modifier = Modifier
                         .size(120.dp)
@@ -132,48 +156,39 @@ fun ProfileScreen(
                         .clickable { viewModel.showEditProfileDialog() },
                     contentAlignment = Alignment.Center
                 ) {
-                    val context = LocalContext.current
-                    val profileImage = uiState.user?.profileImage
-                    val imageRequest = if (profileImage != null) {
-                        ImageRequest.Builder(context)
-                            .data(File(profileImage))
-                            .crossfade(true)
-                            .build()
-                    } else {
-                        ImageRequest.Builder(context)
-                            .data(R.drawable.default_avatar)
-                            .crossfade(true)
-                            .build()
-                    }
-
-                    // Display user name and position
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
-                    ) {
-
-                        Image(
-                            painter = rememberAsyncImagePainter(imageRequest),
-                            contentDescription = "Profile Image",
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = ContentScale.Crop
-                        )
-                    }
+                    Image(
+                        painter = rememberAsyncImagePainter(
+                            model = ImageRequest.Builder(context)
+                                .data(imageModel)
+                                .crossfade(true)
+                                .build()
+                        ),
+                        contentDescription = "Profile Image",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
                     
-                    // Edit overlay
+                    // Edit overlay (only show on hover/press)
+                    var isHovered by remember { mutableStateOf(false) }
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(color = Color.Black.copy(alpha = 0.3f))
+                            .clickable { 
+                                viewModel.showEditProfileDialog()
+                                isHovered = false 
+                            }
+                            .background(color = if (isHovered) Color.Black.copy(alpha = 0.3f) else Color.Transparent)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Edit Profile",
-                            modifier = Modifier
-                                .align(Alignment.Center)
-                                .size(32.dp),
-                            tint = Color.White
-                        )
+                        if (isHovered) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = "Edit Profile",
+                                modifier = Modifier
+                                    .align(Alignment.Center)
+                                    .size(32.dp),
+                                tint = Color.White
+                            )
+                        }
                     }
                 }
             }

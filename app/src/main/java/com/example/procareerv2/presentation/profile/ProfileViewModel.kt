@@ -1,19 +1,18 @@
 package com.example.procareerv2.presentation.profile
 
-import android.content.Context
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.procareerv2.data.local.PreferencesManager
 import com.example.procareerv2.domain.model.Interest
 import com.example.procareerv2.domain.model.Skill
 import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.domain.repository.AuthRepository
-import com.example.procareerv2.util.ImageUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,7 +35,7 @@ data class ProfileUiState(
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    @ApplicationContext private val context: Context
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val defaultSkills = listOf(
@@ -70,19 +69,29 @@ class ProfileViewModel @Inject constructor(
     init {
         // Try to get current user, if not available, use default user
         viewModelScope.launch {
+            // Combine flows from auth repository and preferences manager
             authRepository.getUserFlow().collect { currentUser ->
                 if (currentUser?.id == 1 || currentUser == null) {
+                    // For default/guest user, try to get locally stored skills and interests
+                    val localUser = preferencesManager.getUserFlow().first()
                     _uiState.update { it.copy(
                         user = defaultUser,
-                        skills = defaultSkills,
-                        interests = defaultInterests
+                        skills = localUser?.skills ?: defaultSkills,
+                        interests = localUser?.interests ?: defaultInterests
                     )}
+                    // Save default user with skills and interests if no local data
+                    if (localUser == null) {
+                        preferencesManager.saveUser(defaultUser)
+                    }
                 } else {
+                    // For logged in user, use their data
                     _uiState.update { it.copy(
                         user = currentUser,
                         skills = currentUser.skills,
                         interests = currentUser.interests
                     )}
+                    // Save to local storage
+                    preferencesManager.saveUser(currentUser)
                 }
             }
         }
@@ -91,6 +100,56 @@ class ProfileViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
+        }
+    }
+
+    fun addSkill(skill: Skill) {
+        viewModelScope.launch {
+            preferencesManager.addSkill(skill)
+            // Update UI state
+            _uiState.update { currentState ->
+                val updatedSkills = currentState.skills.toMutableList()
+                if (!updatedSkills.any { it.name == skill.name }) {
+                    updatedSkills.add(skill)
+                }
+                currentState.copy(skills = updatedSkills)
+            }
+        }
+    }
+
+    fun removeSkill(skillName: String) {
+        viewModelScope.launch {
+            preferencesManager.removeSkill(skillName)
+            // Update UI state
+            _uiState.update { currentState ->
+                val updatedSkills = currentState.skills.filterNot { it.name == skillName }
+                currentState.copy(skills = updatedSkills)
+            }
+        }
+    }
+
+    fun addInterest(interest: Interest) {
+        viewModelScope.launch {
+            preferencesManager.addInterest(interest)
+            // Update UI state
+            _uiState.update { currentState ->
+                val updatedInterests = currentState.interests.toMutableList()
+                if (!updatedInterests.any { it.name == interest.name }) {
+                    updatedInterests.add(interest)
+                }
+                currentState.copy(interests = updatedInterests)
+            }
+        }
+    }
+
+    fun removeInterest(interestName: String) {
+        viewModelScope.launch {
+            preferencesManager.removeInterest(interestName)
+            // Update UI state
+            _uiState.update { currentState ->
+                val updatedInterests = currentState.interests.filterNot { it.name == interestName }
+                currentState.copy(interests = updatedInterests)
+            }
         }
     }
 
@@ -138,6 +197,37 @@ class ProfileViewModel @Inject constructor(
             editingInterest = null
         )}
     }
+
+    fun updateProfileImage(uri: Uri) {
+        viewModelScope.launch {
+            try {
+                _uiState.update { it.copy(isLoading = true) }
+                // Get current user
+                val currentUser = _uiState.value.user ?: return@launch
+                
+                // Update user with new image path
+                val updatedUser = currentUser.copy(
+                    profileImage = uri.toString()
+                )
+                
+                // Save to local storage
+                preferencesManager.saveUser(updatedUser)
+                
+                // Update UI state
+                _uiState.update { state ->
+                    state.copy(
+                        user = updatedUser,
+                        isLoading = false
+                    )
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(
+                    error = "Ошибка при обновлении изображения: ${e.message}",
+                    isLoading = false
+                )}
+            }
+        }
+    }
     
     fun startEditingSkill(skill: Skill) {
         _uiState.update { it.copy(editingSkill = skill) }
@@ -161,11 +251,20 @@ class ProfileViewModel @Inject constructor(
                 }
                 val updatedUser = uiState.value.user?.copy(skills = updatedSkills)
                 if (updatedUser != null) {
-                    authRepository.updateUserSkills(updatedSkills)
+                    // Save to local storage first
+                    preferencesManager.saveUser(updatedUser)
+                    // Then update server if needed
+                    try {
+                        authRepository.updateUserSkills(updatedSkills)
+                    } catch (e: Exception) {
+                        println("Failed to update skills on server: ${e.message}")
+                    }
+                    // Update UI state
                     _uiState.update { it.copy(
                         skills = updatedSkills,
                         user = updatedUser,
-                        editingSkill = null
+                        editingSkill = null,
+                        showEditSheet = false
                     )}
                 }
             } else {
@@ -178,10 +277,19 @@ class ProfileViewModel @Inject constructor(
                 skills.add(newSkill)
                 val updatedUser = uiState.value.user?.copy(skills = skills)
                 if (updatedUser != null) {
-                    authRepository.updateUserSkills(skills)
+                    // Save to local storage first
+                    preferencesManager.saveUser(updatedUser)
+                    // Then update server if needed
+                    try {
+                        authRepository.updateUserSkills(skills)
+                    } catch (e: Exception) {
+                        println("Failed to update skills on server: ${e.message}")
+                    }
+                    // Update UI state
                     _uiState.update { it.copy(
                         skills = skills,
-                        user = updatedUser
+                        user = updatedUser,
+                        showEditSheet = false
                     )}
                 }
             }
@@ -202,11 +310,20 @@ class ProfileViewModel @Inject constructor(
                 }
                 val updatedUser = uiState.value.user?.copy(interests = updatedInterests)
                 if (updatedUser != null) {
-                    authRepository.updateUserInterests(updatedInterests)
+                    // Save to local storage first
+                    preferencesManager.saveUser(updatedUser)
+                    // Then update server if needed
+                    try {
+                        authRepository.updateUserInterests(updatedInterests)
+                    } catch (e: Exception) {
+                        println("Failed to update interests on server: ${e.message}")
+                    }
+                    // Update UI state
                     _uiState.update { it.copy(
                         interests = updatedInterests,
                         user = updatedUser,
-                        editingInterest = null
+                        editingInterest = null,
+                        showEditSheet = false
                     )}
                 }
             } else {
@@ -218,10 +335,19 @@ class ProfileViewModel @Inject constructor(
                 interests.add(newInterest)
                 val updatedUser = uiState.value.user?.copy(interests = interests)
                 if (updatedUser != null) {
-                    authRepository.updateUserInterests(interests)
+                    // Save to local storage first
+                    preferencesManager.saveUser(updatedUser)
+                    // Then update server if needed
+                    try {
+                        authRepository.updateUserInterests(interests)
+                    } catch (e: Exception) {
+                        println("Failed to update interests on server: ${e.message}")
+                    }
+                    // Update UI state
                     _uiState.update { it.copy(
                         interests = interests,
-                        user = updatedUser
+                        user = updatedUser,
+                        showEditSheet = false
                     )}
                 }
             }
@@ -233,7 +359,15 @@ class ProfileViewModel @Inject constructor(
             val updatedSkills = uiState.value.skills.filterNot { it.id == id }
             val updatedUser = uiState.value.user?.copy(skills = updatedSkills)
             if (updatedUser != null) {
-                authRepository.updateUserSkills(updatedSkills)
+                // Save to local storage first
+                preferencesManager.saveUser(updatedUser)
+                // Then update server if needed
+                try {
+                    authRepository.updateUserSkills(updatedSkills)
+                } catch (e: Exception) {
+                    println("Failed to update skills on server: ${e.message}")
+                }
+                // Update UI state
                 _uiState.update { it.copy(
                     skills = updatedSkills,
                     user = updatedUser
@@ -247,7 +381,15 @@ class ProfileViewModel @Inject constructor(
             val updatedInterests = uiState.value.interests.filterNot { it.id == id }
             val updatedUser = uiState.value.user?.copy(interests = updatedInterests)
             if (updatedUser != null) {
-                authRepository.updateUserInterests(updatedInterests)
+                // Save to local storage first
+                preferencesManager.saveUser(updatedUser)
+                // Then update server if needed
+                try {
+                    authRepository.updateUserInterests(updatedInterests)
+                } catch (e: Exception) {
+                    println("Failed to update interests on server: ${e.message}")
+                }
+                // Update UI state
                 _uiState.update { it.copy(
                     interests = updatedInterests,
                     user = updatedUser

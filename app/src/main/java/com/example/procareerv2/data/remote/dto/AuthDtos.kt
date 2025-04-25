@@ -6,8 +6,14 @@ data class LoginRequest(
 )
 
 data class LoginResponse(
-    val id: Int,
-    val token: String
+    val data: LoginResponseData,
+    val message: String,
+    val errors: String
+)
+
+data class LoginResponseData(
+    val token: String,
+    val user_id: Int
 )
 
 data class RegisterRequest(
@@ -17,6 +23,13 @@ data class RegisterRequest(
 )
 
 data class RegisterResponse(
+    val data: RegisterResponseData,
+    val message: String,
+    val errors: String
+)
+
+data class RegisterResponseData(
     val id: Int,
-    val token: String
+    val token: String,
+    val user_id: Int
 )

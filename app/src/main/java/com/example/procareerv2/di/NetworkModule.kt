@@ -4,6 +4,7 @@ import com.example.procareerv2.data.local.PreferencesManager
 import com.example.procareerv2.data.remote.api.AuthApi
 import com.example.procareerv2.data.remote.api.TestApi
 import com.example.procareerv2.data.remote.api.VacancyApi
+import com.example.procareerv2.data.remote.interceptor.AuthInterceptor
 import com.example.procareerv2.data.repository.AuthRepositoryImpl
 import com.example.procareerv2.data.repository.TestRepositoryImpl
 import com.example.procareerv2.data.repository.VacancyRepositoryImpl
@@ -19,7 +20,24 @@ import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Qualifier
 import javax.inject.Singleton
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class AuthRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MainRetrofit
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class AuthHttpClient
+
+@Qualifier
+@Retention(AnnotationRetention.BINARY)
+annotation class MainHttpClient
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,9 +53,10 @@ object NetworkModule {
         }
     }
 
+    @AuthHttpClient
     @Provides
     @Singleton
-    fun provideOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
+    fun provideAuthOkHttpClient(loggingInterceptor: HttpLoggingInterceptor): OkHttpClient {
         return OkHttpClient.Builder()
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
@@ -46,9 +65,37 @@ object NetworkModule {
             .build()
     }
 
+    @MainHttpClient
     @Provides
     @Singleton
-    fun provideRetrofit(okHttpClient: OkHttpClient): Retrofit {
+    fun provideMainOkHttpClient(
+        loggingInterceptor: HttpLoggingInterceptor,
+        authInterceptor: AuthInterceptor
+    ): OkHttpClient {
+        return OkHttpClient.Builder()
+            .addInterceptor(loggingInterceptor)
+            .addInterceptor(authInterceptor)
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .build()
+    }
+
+    @AuthRetrofit
+    @Provides
+    @Singleton
+    fun provideAuthRetrofit(@AuthHttpClient okHttpClient: OkHttpClient): Retrofit {
+        return Retrofit.Builder()
+            .baseUrl(BASE_URL)
+            .client(okHttpClient)
+            .addConverterFactory(GsonConverterFactory.create())
+            .build()
+    }
+
+    @MainRetrofit
+    @Provides
+    @Singleton
+    fun provideMainRetrofit(@MainHttpClient okHttpClient: OkHttpClient): Retrofit {
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(okHttpClient)
@@ -58,19 +105,19 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthApi(retrofit: Retrofit): AuthApi {
+    fun provideAuthApi(@AuthRetrofit retrofit: Retrofit): AuthApi {
         return retrofit.create(AuthApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideTestApi(retrofit: Retrofit): TestApi {
+    fun provideTestApi(@MainRetrofit retrofit: Retrofit): TestApi {
         return retrofit.create(TestApi::class.java)
     }
 
     @Provides
     @Singleton
-    fun provideVacancyApi(retrofit: Retrofit): VacancyApi {
+    fun provideVacancyApi(@MainRetrofit retrofit: Retrofit): VacancyApi {
         return retrofit.create(VacancyApi::class.java)
     }
 

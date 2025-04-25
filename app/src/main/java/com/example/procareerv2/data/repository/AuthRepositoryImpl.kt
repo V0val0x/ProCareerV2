@@ -21,10 +21,10 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.login(LoginRequest(email, password))
             val user = User(
-                id = response.id,
+                id = response.data.user_id,
                 name = "", // Server doesn't return name in login response
                 email = email,
-                token = response.token
+                token = response.data.token
             )
             preferencesManager.saveUser(user)
             Result.success(user)
@@ -37,10 +37,10 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.register(RegisterRequest(name, email, password))
             val user = User(
-                id = response.id,
+                id = response.data.id, // Use id instead of user_id
                 name = name,
                 email = email,
-                token = response.token
+                token = response.data.token
             )
             preferencesManager.saveUser(user)
             Result.success(user)

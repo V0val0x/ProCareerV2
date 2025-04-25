@@ -4,6 +4,6 @@ import com.example.procareerv2.data.remote.dto.VacancyListResponse
 import retrofit2.http.GET
 
 interface VacancyApi {
-    @GET("vacancies")
+    @GET("api/vacancies")
     suspend fun getVacancies(): VacancyListResponse
 }

@@ -30,7 +30,7 @@ class PreferencesManager @Inject constructor(
     private val dataStore = context.dataStore
 
     companion object {
-        private val USER_ID = intPreferencesKey("user_id")
+        private val USER_ID = stringPreferencesKey("user_id")
         private val USER_NAME = stringPreferencesKey("user_name")
         private val USER_EMAIL = stringPreferencesKey("user_email")
         private val USER_TOKEN = stringPreferencesKey("user_token")
@@ -42,9 +42,17 @@ class PreferencesManager @Inject constructor(
         private val gson = Gson()
     }
 
+    fun getUserId(): String? = runBlocking {
+        dataStore.data.first()[USER_ID]?.toString()
+    }
+
+    fun getAuthToken(): String? = runBlocking {
+        dataStore.data.first()[USER_TOKEN]
+    }
+
     suspend fun saveUser(user: User) {
         dataStore.edit { preferences ->
-            preferences[USER_ID] = user.id
+            preferences[USER_ID] = user.id.toString()
             preferences[USER_NAME] = user.name
             preferences[USER_EMAIL] = user.email
             preferences[USER_TOKEN] = user.token
@@ -52,6 +60,58 @@ class PreferencesManager @Inject constructor(
             user.position?.let { preferences[USER_POSITION] = it }
             preferences[USER_SKILLS] = gson.toJson(user.skills)
             preferences[USER_INTERESTS] = gson.toJson(user.interests)
+        }
+    }
+
+    suspend fun updateSkills(skills: List<Skill>) {
+        val currentUser = getUserFlow().first()
+        currentUser?.let { user ->
+            saveUser(user.copy(skills = skills))
+        }
+    }
+
+    suspend fun updateInterests(interests: List<Interest>) {
+        val currentUser = getUserFlow().first()
+        currentUser?.let { user ->
+            saveUser(user.copy(interests = interests))
+        }
+    }
+
+    suspend fun addSkill(skill: Skill) {
+        val currentUser = getUserFlow().first()
+        currentUser?.let { user ->
+            val updatedSkills = user.skills.toMutableList()
+            if (!updatedSkills.any { it.name == skill.name }) {
+                updatedSkills.add(skill)
+                saveUser(user.copy(skills = updatedSkills))
+            }
+        }
+    }
+
+    suspend fun removeSkill(skillName: String) {
+        val currentUser = getUserFlow().first()
+        currentUser?.let { user ->
+            val updatedSkills = user.skills.filterNot { it.name == skillName }
+            saveUser(user.copy(skills = updatedSkills))
+        }
+    }
+
+    suspend fun addInterest(interest: Interest) {
+        val currentUser = getUserFlow().first()
+        currentUser?.let { user ->
+            val updatedInterests = user.interests.toMutableList()
+            if (!updatedInterests.any { it.name == interest.name }) {
+                updatedInterests.add(interest)
+                saveUser(user.copy(interests = updatedInterests))
+            }
+        }
+    }
+
+    suspend fun removeInterest(interestName: String) {
+        val currentUser = getUserFlow().first()
+        currentUser?.let { user ->
+            val updatedInterests = user.interests.filterNot { it.name == interestName }
+            saveUser(user.copy(interests = updatedInterests))
         }
     }
 
@@ -65,8 +125,11 @@ class PreferencesManager @Inject constructor(
                 val skills = gson.fromJson<List<Skill>>(skillsJson, skillsType)
                 val interests = gson.fromJson<List<Interest>>(interestsJson, interestsType)
 
+                // Get user ID from preferences
+                val userId = preferences[USER_ID]?.toString()?.toIntOrNull() ?: -1
+
                 User(
-                    id = preferences[USER_ID] ?: -1,
+                    id = userId,
                     name = preferences[USER_NAME] ?: "",
                     email = preferences[USER_EMAIL] ?: "",
                     token = preferences[USER_TOKEN] ?: "",
@@ -92,8 +155,15 @@ class PreferencesManager @Inject constructor(
                 val skills = gson.fromJson<List<Skill>>(skillsJson, skillsType)
                 val interests = gson.fromJson<List<Interest>>(interestsJson, interestsType)
 
+                // Get user ID and handle type conversion
+                val userId = try {
+                    preferences[USER_ID].toString().toInt()
+                } catch (e: Exception) {
+                    -1
+                }
+
                 user = User(
-                    id = preferences[USER_ID] ?: -1,
+                    id = userId,
                     name = preferences[USER_NAME] ?: "",
                     email = preferences[USER_EMAIL] ?: "",
                     token = preferences[USER_TOKEN] ?: "",

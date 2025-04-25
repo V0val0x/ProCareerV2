@@ -9,12 +9,12 @@ import retrofit2.http.GET
 import retrofit2.http.POST
 
 interface TestApi {
-    @GET("tests")
+    @GET("api/tests")
     suspend fun getTests(): TestListResponse
 
-    @POST("tests/start")
+    @POST("api/tests/start")
     suspend fun startTest(@Body request: StartTestRequest): TestResponse
 
-    @POST("tests/end")
+    @POST("api/tests/end")
     suspend fun submitTestResults(@Body request: TestResultRequest)
 }
