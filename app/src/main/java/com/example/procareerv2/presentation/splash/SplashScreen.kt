@@ -39,7 +39,7 @@ fun SplashScreen(
 
     LaunchedEffect(key1 = true) {
         // Добавляем таймаут для проверки логина
-        val result = withTimeoutOrNull(3000) { // 3 секунды таймаут
+        val result = withTimeoutOrNull(1000) { // 1 секунды таймаут
             try {
                 if (viewModel.isFirstLaunch()) {
                     onNavigateToOnboarding()
