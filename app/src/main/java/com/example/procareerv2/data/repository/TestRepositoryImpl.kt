@@ -20,7 +20,7 @@ class TestRepositoryImpl @Inject constructor(
                 Test(
                     id = dto.id,
                     title = dto.title,
-                    duration = dto.average_passing_time ?: 0,
+                    duration = dto.duration ?: 0,
                     numberOfQuestions = 0 // Not provided in the list response
                 )
             }

@@ -10,7 +10,7 @@ data class TestDto(
     val id: Int,
     val title: String,
     val description: String?,
-    val average_passing_time: Int?,
+    val duration: Int?,
     val id_skill: Int?
 )
 
