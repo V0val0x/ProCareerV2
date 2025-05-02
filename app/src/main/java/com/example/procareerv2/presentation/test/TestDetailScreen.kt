@@ -102,7 +102,7 @@ fun TestDetailScreen(
                         ) {
                             Text(
                                 text = "Тест на уровень знаний ${uiState.test?.title ?: ""}",
-                                style = MaterialTheme.typography.headlineMedium,
+                                style = MaterialTheme.typography.headlineLarge,
                                 color = MaterialTheme.colorScheme.onTertiary,
                                 textAlign = TextAlign.Center
                             )
@@ -121,14 +121,14 @@ fun TestDetailScreen(
                         onClick = onStartTest,  // Только навигация, startTest будет вызван в TestQuestionScreen
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text("Начать")
+                        Text("Начать тестирование")
                     }
 
                     Spacer(modifier = Modifier.height(32.dp))
 
                     Text(
                         text = "Помните, что мы не школа, чтобы ругать вас за ошибки. Этот тест скорее для того, чтобы понять ваши пробелы. Что-то не знать - нестрашно. Страшно думать, что ты все знаешь..",
-                        style = MaterialTheme.typography.bodyMedium,
+                        style = MaterialTheme.typography.bodyLarge,
                         textAlign = TextAlign.Center,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
