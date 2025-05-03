@@ -497,13 +497,18 @@ fun ProfileScreen(
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Получать уведомления")
                     Spacer(modifier = Modifier.width(16.dp))
-                    Switch(
-                        checked = isSubscribed,
-                        onCheckedChange = {
-                            isSubscribed = it
-                            showSnackbar = true
-                        }
-                    )
+                    IconButton(onClick = {
+                        isSubscribed = !isSubscribed
+                        showSnackbar = true
+                    }) {
+                        val icon = if (isSubscribed) Icons.Default.Check else Icons.Default.Close
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = if (isSubscribed) "Включено" else "Выключено",
+                            tint = if (isSubscribed) Color(0xFF4CAF50) else Color(0xFFF44336),
+                            modifier = Modifier.size(40.dp)
+                        )
+                    }
                 }
             },
             confirmButton = {

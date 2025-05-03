@@ -48,7 +48,7 @@ sealed class Screen(val route: String) {
 fun NavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val userState by authViewModel.user.collectAsState()
-    val startDestination = Screen.Splash.route
+    val startDestination = Screen.Onboarding.route
 
     NavHost(
         navController = navController,
@@ -82,7 +82,12 @@ fun NavGraph(navController: NavHostController) {
                     }
                 },
                 onSkip = {
-                    navController.navigate(Screen.Login.route) {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
                     }
                 }
