@@ -110,7 +110,7 @@ fun NavGraph(navController: NavHostController) {
                     }
                 },
                 onRegisterSuccess = {
-                    navController.navigate(Screen.Home.route) {
+                    navController.navigate(Screen.Onboarding.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
                     }
                 }

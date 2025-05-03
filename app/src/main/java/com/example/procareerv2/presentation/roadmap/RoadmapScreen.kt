@@ -35,7 +35,7 @@ fun RoadmapScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(uiState.roadmap?.title ?: "") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(

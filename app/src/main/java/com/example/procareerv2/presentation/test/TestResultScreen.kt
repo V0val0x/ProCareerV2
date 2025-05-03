@@ -30,7 +30,7 @@ fun TestResultScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Результаты теста") }
+                title = {},
             )
         }
     ) { paddingValues ->

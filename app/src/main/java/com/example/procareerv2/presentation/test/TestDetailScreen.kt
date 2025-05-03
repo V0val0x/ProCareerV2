@@ -48,7 +48,7 @@ fun TestDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Тестирование") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")

@@ -61,7 +61,7 @@ fun TestListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Тестирование") },
+                title = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White

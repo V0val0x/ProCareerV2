@@ -49,11 +49,15 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     var selectedTab by remember { mutableStateOf(3) } // Профиль - вкладка 3
+    var showSubscriptionDialog by remember { mutableStateOf(false) }
+    var isSubscribed by remember { mutableStateOf(true) }
+    var showSnackbar by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Мой профиль") },
+                title = {},
                 actions = {
                     var showMenu by remember { mutableStateOf(false) }
                     IconButton(onClick = { showMenu = true }) {
@@ -75,16 +79,9 @@ fun ProfileScreen(
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Редактировать навыки") },
+                            text = { Text("Управление рассылкой") },
                             onClick = {
-                                viewModel.showEditSheet(true)
-                                showMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Редактировать интересы") },
-                            onClick = {
-                                viewModel.showEditSheet(false)
+                                showSubscriptionDialog = true
                                 showMenu = false
                             }
                         )
@@ -96,6 +93,7 @@ fun ProfileScreen(
                 )
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             ProCareerBottomBar(
                 selectedTab = selectedTab,
@@ -488,6 +486,39 @@ fun ProfileScreen(
                 },
                 error = uiState.error
             )
+        }
+    }
+
+    if (showSubscriptionDialog) {
+        AlertDialog(
+            onDismissRequest = { showSubscriptionDialog = false },
+            title = { Text("Управление рассылкой") },
+            text = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Получать уведомления")
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Switch(
+                        checked = isSubscribed,
+                        onCheckedChange = {
+                            isSubscribed = it
+                            showSnackbar = true
+                        }
+                    )
+                }
+            },
+            confirmButton = {
+                Button(onClick = { showSubscriptionDialog = false }) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+    if (showSnackbar) {
+        LaunchedEffect(isSubscribed) {
+            snackbarHostState.showSnackbar(
+                if (isSubscribed) "Уведомления включены" else "Уведомления отключены"
+            )
+            showSnackbar = false
         }
     }
 }

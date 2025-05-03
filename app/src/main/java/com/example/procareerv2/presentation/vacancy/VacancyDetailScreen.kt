@@ -64,7 +64,7 @@ fun VacancyDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Детали вакансии") },
+                title = {},
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(

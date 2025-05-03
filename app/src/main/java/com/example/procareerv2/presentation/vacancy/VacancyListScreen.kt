@@ -67,7 +67,7 @@ fun VacancyListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Вакансии") },
+                title = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = Color.White

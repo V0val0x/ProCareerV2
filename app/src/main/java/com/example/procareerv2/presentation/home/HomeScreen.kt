@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -33,6 +34,10 @@ import androidx.compose.ui.unit.dp
 import com.example.procareerv2.R
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
 import com.example.procareerv2.presentation.common.components.ProCareerTopBar
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
 
 @Composable
 fun HomeScreen(
@@ -45,10 +50,7 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            ProCareerTopBar(
-                title = "ProCareer",
-                subtitle = "Развивай свою карьеру"
-            )
+            ProCareerTopBar()
         },
         bottomBar = {
             ProCareerBottomBar(
@@ -61,154 +63,66 @@ fun HomeScreen(
             )
         }
     ) { paddingValues ->
+        val scrollState = rememberScrollState()
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(paddingValues)
-                .padding(16.dp),
+                .padding(top = 24.dp, start = 8.dp, end = 8.dp, bottom = 0.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            verticalArrangement = Arrangement.spacedBy(28.dp)
         ) {
-
             // Vacancies card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp) // Увеличиваем высоту карточки
+                    .padding(horizontal = 4.dp)
+                    .height(300.dp)
                     .clickable { onNavigateToVacancies() },
-                shape = RoundedCornerShape(24.dp), // Увеличиваем скругление углов
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp) // Добавляем тень
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.vacancies_bg),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.vacancies_bg),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f)) // Добавляем затемнение для лучшей читаемости
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.Bottom,
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = "Вакансии",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Найдите работу своей мечты",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
+                )
             }
-
             // Roadmap card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .padding(horizontal = 4.dp)
+                    .height(300.dp)
                     .clickable { onNavigateToRoadmap() },
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.roadmap_bg),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.roadmap_bg),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f))
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.Bottom,
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = "Роудмап",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Спланируйте свой карьерный путь",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
+                )
             }
-
             // Tests card
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(180.dp)
+                    .padding(horizontal = 4.dp)
+                    .height(300.dp)
                     .clickable { onNavigateToTests() },
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                shape = RoundedCornerShape(28.dp),
+                elevation = CardDefaults.cardElevation(defaultElevation = 12.dp)
             ) {
-                Box(
+                Image(
+                    painter = painterResource(id = R.drawable.tests_bg),
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier.fillMaxSize()
-                ) {
-                    Image(
-                        painter = painterResource(id = R.drawable.tests_bg),
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .background(Color.Black.copy(alpha = 0.4f))
-                    )
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(24.dp),
-                        verticalArrangement = Arrangement.Bottom,
-                        horizontalAlignment = Alignment.Start
-                    ) {
-                        Text(
-                            text = "Тесты",
-                            style = MaterialTheme.typography.headlineMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = "Проверьте свои навыки",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.White.copy(alpha = 0.9f)
-                        )
-                    }
-                }
+                )
             }
         }
     }

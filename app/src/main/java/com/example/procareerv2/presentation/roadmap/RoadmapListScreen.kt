@@ -31,7 +31,7 @@ fun RoadmapListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Роадмапы") },
+                title = {},
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary

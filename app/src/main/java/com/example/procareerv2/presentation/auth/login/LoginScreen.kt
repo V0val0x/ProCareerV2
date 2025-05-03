@@ -56,6 +56,8 @@ fun LoginScreen(
     val showNoInternetDialog = remember { mutableStateOf(false) }
     val uiState by viewModel.uiState.collectAsState()
     var selectedTabIndex by remember { mutableStateOf(0) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
+    var forgotPasswordMessage by remember { mutableStateOf("") }
 
     LaunchedEffect(key1 = true) @androidx.annotation.RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE) {
         if (!NetworkUtils.isNetworkAvailable(context)) {
@@ -185,7 +187,14 @@ fun LoginScreen(
                 text = "Забыли пароль?",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable { /* Handle forgot password */ }
+                modifier = Modifier.clickable {
+                    if (uiState.email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
+                        forgotPasswordMessage = "Новый пароль отправлен на ${uiState.email}"
+                    } else {
+                        forgotPasswordMessage = "Такой почты не найдено"
+                    }
+                    showForgotPasswordDialog = true
+                }
             )
         }
 
@@ -202,6 +211,19 @@ fun LoginScreen(
         )
 
         Spacer(modifier = Modifier.weight(1f))
+
+        if (showForgotPasswordDialog) {
+            AlertDialog(
+                onDismissRequest = { showForgotPasswordDialog = false },
+                title = { Text("Восстановление пароля") },
+                text = { Text(forgotPasswordMessage) },
+                confirmButton = {
+                    Button(onClick = { showForgotPasswordDialog = false }) {
+                        Text("OK")
+                    }
+                }
+            )
+        }
 
     }
 }
