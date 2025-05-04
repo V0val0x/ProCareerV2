@@ -41,6 +41,7 @@ import com.example.procareerv2.presentation.common.components.ProCareerTextField
 import android.content.Context
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
@@ -176,13 +177,29 @@ fun LoginScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Forgot password
+        // Remember me checkbox
         Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.End
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { viewModel.onRememberMeChanged(!uiState.rememberMe) }
+            ) {
+                Checkbox(
+                    checked = uiState.rememberMe,
+                    onCheckedChange = { viewModel.onRememberMeChanged(it) }
+                )
+                Text(
+                    text = "Запомнить меня",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+            
             Text(
                 text = "Забыли пароль?",
                 style = MaterialTheme.typography.bodyMedium,
