@@ -49,23 +49,15 @@ class ProfileViewModel @Inject constructor(
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
 
     init {
-        // Try to get current user, if not available, use default user
         viewModelScope.launch {
-            // Combine flows from auth repository and preferences manager
+            // Получаем текущего пользователя из DataStore
             authRepository.getUserFlow().collect { currentUser ->
-                if (currentUser?.id == 1 || currentUser == null) {
-                    // For default/guest user, try to get locally stored skills and interests
-                    val localUser = preferencesManager.getUserFlow().first()
-                    _uiState.update { it.copy(
-                        user = defaultUser
-                    )}
-                    // Save default user with skills and interests if no local data
-                    if (localUser == null) {
-                        preferencesManager.saveUser(defaultUser)
-                    }
-                } else {
-                    // For logged in user, fetch their profile data
+                if (currentUser != null) {
+                    // Если пользователь авторизован, получаем его профиль
                     fetchUserProfile(currentUser.id)
+                } else {
+                    // Если пользователь не авторизован, используем дефолтные значения
+                    _uiState.update { it.copy(user = defaultUser) }
                 }
             }
         }
@@ -73,20 +65,29 @@ class ProfileViewModel @Inject constructor(
 
     private fun fetchUserProfile(userId: Int) {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val result = authRepository.fetchUserProfile(userId)
                 result.onSuccess { user ->
                     _uiState.update { it.copy(
                         user = user,
                         interests = user.interests,
+                        isLoading = false,
+                        error = null
+                    )}
+                    // Сохраняем обновленные данные в DataStore
+                    preferencesManager.saveUser(user)
+                }.onFailure { error ->
+                    _uiState.update { it.copy(
+                        error = error.message ?: "Не удалось загрузить профиль",
                         isLoading = false
                     )}
-                }.onFailure { error ->
-                    _uiState.update { it.copy(error = error.message ?: "Failed to fetch user profile", isLoading = false) }
                 }
             } catch (e: Exception) {
-                _uiState.update { it.copy(error = e.message ?: "Failed to fetch user profile", isLoading = false) }
+                _uiState.update { it.copy(
+                    error = e.message ?: "Не удалось загрузить профиль",
+                    isLoading = false
+                )}
             }
         }
     }
@@ -94,6 +95,10 @@ class ProfileViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
+            // Очищаем состояние UI
+            _uiState.update { 
+                ProfileUiState() // Сбрасываем все состояние к начальному
+            }
         }
     }
 

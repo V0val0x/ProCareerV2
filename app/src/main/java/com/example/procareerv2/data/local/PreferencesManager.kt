@@ -143,12 +143,7 @@ class PreferencesManager @Inject constructor(
 
     suspend fun clearUser() {
         dataStore.edit { preferences ->
-            preferences.remove(USER_ID)
-            preferences.remove(USER_NAME)
-            preferences.remove(USER_EMAIL)
-            preferences.remove(USER_TOKEN)
-            preferences.remove(USER_PROFILE_IMAGE)
-            preferences.remove(USER_POSITION)
+            preferences.clear() // Очищаем все данные пользователя
         }
     }
 
