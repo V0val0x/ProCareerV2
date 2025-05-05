@@ -5,7 +5,6 @@ import com.example.procareerv2.data.remote.api.AuthApi
 import com.example.procareerv2.data.remote.dto.LoginRequest
 import com.example.procareerv2.data.remote.dto.RegisterRequest
 import com.example.procareerv2.domain.model.Interest
-import com.example.procareerv2.domain.model.Skill
 import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.domain.repository.AuthRepository
 import kotlinx.coroutines.flow.Flow
@@ -61,16 +60,7 @@ class AuthRepositoryImpl @Inject constructor(
         return preferencesManager.getUser() != null
     }
 
-    override suspend fun updateUserSkills(skills: List<Skill>): Result<User> {
-        return try {
-            val currentUser = preferencesManager.getUser() ?: throw Exception("User not found")
-            val updatedUser = currentUser.copy(skills = skills)
-            preferencesManager.saveUser(updatedUser)
-            Result.success(updatedUser)
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
+
 
     override suspend fun updateUserInterests(interests: List<Interest>): Result<User> {
         return try {
@@ -87,6 +77,18 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             preferencesManager.saveUser(user)
             Result.success(user)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun fetchUserProfile(userId: Int): Result<User> {
+        return try {
+            val currentUser = preferencesManager.getUser() ?: throw Exception("User not found")
+            val response = authApi.getUserProfile(userId)
+            val updatedUser = response.data.toDomainUser(currentUser.token)
+            preferencesManager.saveUser(updatedUser)
+            Result.success(updatedUser)
         } catch (e: Exception) {
             Result.failure(e)
         }

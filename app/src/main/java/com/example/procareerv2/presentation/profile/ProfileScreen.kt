@@ -217,74 +217,6 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Skills Section
-            Column(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Навыки",
-                        style = MaterialTheme.typography.titleLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    IconButton(onClick = { viewModel.showEditSheet(true) }) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = "Редактировать навыки",
-                            tint = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-                Spacer(modifier = Modifier.height(8.dp))
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        uiState.skills.forEach { skill ->
-                            Column(modifier = Modifier.padding(vertical = 4.dp)) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = skill.name,
-                                        style = MaterialTheme.typography.bodyLarge,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Text(
-                                        text = "${skill.proficiencyLevel}%",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                                Spacer(modifier = Modifier.height(4.dp))
-                                LinearProgressIndicator(
-                                    progress = skill.proficiencyLevel / 100f,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(8.dp)
-                                        .clip(RoundedCornerShape(4.dp)),
-                                    color = MaterialTheme.colorScheme.primary,
-                                    trackColor = MaterialTheme.colorScheme.surfaceVariant
-                                )
-                            }
-                            if (skill != uiState.skills.last()) {
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
-                        }
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(24.dp))
-
             // Interests Section
             Column(
                 modifier = Modifier.fillMaxWidth()
@@ -451,24 +383,18 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(16.dp))
     }
 
-    // Bottom Sheet for editing skills and interests
-    if (uiState.showEditSheet) {
+    // Bottom Sheet for editing interests
+    if (uiState.showEditInterestsSheet) {
         val sheetState = rememberModalBottomSheetState()
         ModalBottomSheet(
             onDismissRequest = { viewModel.hideEditSheet() },
             sheetState = sheetState
         ) {
             EditProfileSheet(
-                isSkillsMode = uiState.isSkillsMode,
-                skills = uiState.user?.skills ?: emptyList(),
                 interests = uiState.user?.interests ?: emptyList(),
-                onAddSkill = viewModel::addSkill,
                 onAddInterest = viewModel::addInterest,
-                onDeleteSkill = viewModel::deleteSkill,
                 onDeleteInterest = viewModel::deleteInterest,
-                onStartEditingSkill = viewModel::startEditingSkill,
                 onStartEditingInterest = viewModel::startEditingInterest,
-                editingSkill = uiState.editingSkill,
                 editingInterest = uiState.editingInterest,
                 onDismiss = { viewModel.hideEditSheet() }
             )
