@@ -1,6 +1,8 @@
 package com.example.procareerv2.presentation.navigation
 
+import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -49,6 +51,18 @@ fun NavGraph(navController: NavHostController) {
     val authViewModel: AuthViewModel = hiltViewModel()
     val userState by authViewModel.user.collectAsState()
     val startDestination = Screen.Splash.route
+    
+    LaunchedEffect(userState) {
+        Log.d("NavGraph", "AUTH STATE CHANGED: user=${userState?.id}, current route=${navController.currentBackStackEntry?.destination?.route}")
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        
+        if (userState != null && currentRoute == Screen.Login.route) {
+            Log.d("NavGraph", "*** NAVIGATING TO HOME FROM LOGIN SCREEN ***")
+            navController.navigate(Screen.Home.route) {
+                popUpTo(Screen.Login.route) { inclusive = true }
+            }
+        }
+    }
 
     NavHost(
         navController = navController,
@@ -100,6 +114,7 @@ fun NavGraph(navController: NavHostController) {
                     navController.navigate(Screen.Register.route)
                 },
                 onLoginSuccess = {
+                    Log.d("NavGraph", "Login success callback executed")
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }

@@ -1,8 +1,10 @@
 package com.example.procareerv2.presentation.auth.login
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.procareerv2.data.local.UserPreferencesManager
+import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -61,21 +63,27 @@ class LoginViewModel @Inject constructor(
     }
 
     fun login() {
-        if (!validateInputs()) return
+        if (!validateInputs(_uiState.value.email, _uiState.value.password)) return
 
         _uiState.update { it.copy(isLoading = true, error = null) }
+        Log.d("LoginViewModel", "Starting login process")
 
         viewModelScope.launch {
             authRepository.login(_uiState.value.email, _uiState.value.password)
-                .onSuccess {
+                .onSuccess { user ->
+                    Log.d("LoginViewModel", "Login successful: ${user.id}")
                     userPreferencesManager.saveCredentials(
                         _uiState.value.email,
                         _uiState.value.password,
                         _uiState.value.rememberMe
                     )
+                    
+                    // Устанавливаем флаг успешного входа
                     _uiState.update { it.copy(isLoading = false, isLoggedIn = true) }
+                    Log.d("LoginViewModel", "Updated state - isLoggedIn: ${_uiState.value.isLoggedIn}")
                 }
                 .onFailure { exception ->
+                    Log.e("LoginViewModel", "Login failed: ${exception.message}")
                     _uiState.update {
                         it.copy(
                             isLoading = false,
@@ -86,21 +94,67 @@ class LoginViewModel @Inject constructor(
         }
     }
 
-    private fun validateInputs(): Boolean {
+    // Прямой метод входа, возвращающий Result<User> для обработки в UI
+    suspend fun loginDirect(email: String, password: String): Result<User> {
+        if (!validateInputs(email, password)) return Result.failure(Exception("Ошибка валидации"))
+
+        _uiState.update { it.copy(isLoading = true, error = null) }
+        Log.d("LoginViewModel", "Starting direct login process")
+
+        return try {
+            val result = authRepository.login(email, password)
+            
+            result.onSuccess { user ->
+                Log.d("LoginViewModel", "Direct login successful: ${user.id}")
+                userPreferencesManager.saveCredentials(
+                    email,
+                    password,
+                    _uiState.value.rememberMe
+                )
+                
+                // Устанавливаем флаг успешного входа
+                _uiState.update { it.copy(isLoading = false, isLoggedIn = true) }
+                Log.d("LoginViewModel", "Updated state after direct login - isLoggedIn: ${_uiState.value.isLoggedIn}")
+            }
+            
+            result.onFailure { exception ->
+                Log.e("LoginViewModel", "Direct login failed: ${exception.message}")
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = exception.message ?: "Ошибка входа"
+                    )
+                }
+            }
+            
+            result
+        } catch (e: Exception) {
+            Log.e("LoginViewModel", "Exception during direct login: ${e.message}")
+            _uiState.update {
+                it.copy(
+                    isLoading = false,
+                    error = e.message ?: "Непредвиденная ошибка входа"
+                )
+            }
+            Result.failure(e)
+        }
+    }
+
+    private fun validateInputs(email: String, password: String): Boolean {
         var isValid = true
 
-        if (_uiState.value.email.isBlank()) {
+        if (email.isBlank()) {
             _uiState.update { it.copy(emailError = "Email не может быть пустым") }
             isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(_uiState.value.email).matches()) {
+        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             _uiState.update { it.copy(emailError = "Некорректный email") }
             isValid = false
         }
 
-        if (_uiState.value.password.isBlank()) {
+        if (password.isBlank()) {
             _uiState.update { it.copy(passwordError = "Пароль не может быть пустым") }
             isValid = false
-        } else if (_uiState.value.password.length < 6) {
+        } else if (password.length < 6) {
             _uiState.update { it.copy(passwordError = "Пароль должен содержать минимум 6 символов") }
             isValid = false
         }

@@ -1,6 +1,7 @@
 package com.example.procareerv2.presentation.profile
 
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.procareerv2.data.local.PreferencesManager
@@ -50,15 +51,28 @@ class ProfileViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            // Получаем текущего пользователя из DataStore
-            authRepository.getUserFlow().collect { currentUser ->
-                if (currentUser != null) {
-                    // Если пользователь авторизован, получаем его профиль
-                    fetchUserProfile(currentUser.id)
-                } else {
-                    // Если пользователь не авторизован, используем дефолтные значения
-                    _uiState.update { it.copy(user = defaultUser) }
-                }
+            // Загружаем начальные данные из DataStore
+            val storedUser = preferencesManager.getUserFlow().first()
+            if (storedUser != null) {
+                _uiState.update { it.copy(user = storedUser, interests = storedUser.interests) }
+            }
+            
+            // Затем обновляем данные с сервера
+            refreshUserProfile()
+        }
+    }
+    
+    // Публичный метод для обновления профиля, который можно вызвать из UI
+    fun refreshUserProfile() {
+        viewModelScope.launch {
+            // Проверяем, авторизован ли пользователь
+            val currentUser = authRepository.getUserFlow().first()
+            if (currentUser != null) {
+                Log.d("ProfileViewModel", "Refreshing user profile for user ID: ${currentUser.id}")
+                fetchUserProfile(currentUser.id)
+            } else {
+                Log.d("ProfileViewModel", "No logged in user found, using default")
+                _uiState.update { it.copy(user = defaultUser) }
             }
         }
     }
@@ -67,8 +81,10 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
+                Log.d("ProfileViewModel", "Fetching user profile from server for ID: $userId")
                 val result = authRepository.fetchUserProfile(userId)
                 result.onSuccess { user ->
+                    Log.d("ProfileViewModel", "Profile fetched successfully: ${user.name}")
                     _uiState.update { it.copy(
                         user = user,
                         interests = user.interests,
@@ -78,12 +94,14 @@ class ProfileViewModel @Inject constructor(
                     // Сохраняем обновленные данные в DataStore
                     preferencesManager.saveUser(user)
                 }.onFailure { error ->
+                    Log.e("ProfileViewModel", "Failed to fetch profile: ${error.message}")
                     _uiState.update { it.copy(
                         error = error.message ?: "Не удалось загрузить профиль",
                         isLoading = false
                     )}
                 }
             } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Exception while fetching profile: ${e.message}")
                 _uiState.update { it.copy(
                     error = e.message ?: "Не удалось загрузить профиль",
                     isLoading = false
@@ -101,10 +119,6 @@ class ProfileViewModel @Inject constructor(
             }
         }
     }
-
-
-
-
 
     fun addInterest(interest: Interest) {
         viewModelScope.launch {
@@ -143,16 +157,53 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { it.clearError() }
     }
 
-    fun updateUserProfile(name: String, position: String, profileImage: String?) {
+    fun updateUserProfile(name: String, position: String, profileImage: Uri?) {
         viewModelScope.launch {
-            val updatedUser = uiState.value.user?.copy(
-                name = name,
-                position = position,
-                profileImage = profileImage
-            )
-            if (updatedUser != null) {
-                authRepository.updateUserProfile(updatedUser)
-                _uiState.update { it.copy(user = updatedUser) }
+            Log.d("ProfileViewModel", "Updating profile: name=$name, position=$position, imageUri=$profileImage")
+            _uiState.update { it.copy(isLoading = true, error = null) }
+            try {
+                val currentUser = uiState.value.user ?: throw Exception("Пользователь не найден")
+                Log.d("ProfileViewModel", "Current user: ${currentUser.id}, ${currentUser.name}")
+                
+                // Создаем обновленного пользователя с новыми данными, сохраняя существующую картинку профиля
+                val updatedUser = currentUser.copy(
+                    name = name,
+                    position = position
+                    // Обратите внимание: profileImage из Uri теперь не передается,
+                    // так как сервер не принимает этот параметр
+                )
+                
+                Log.d("ProfileViewModel", "Sending update to repository for user ID: ${updatedUser.id}")
+                val result = authRepository.updateUserProfile(updatedUser)
+                
+                result.onSuccess { user ->
+                    Log.d("ProfileViewModel", "Profile updated successfully: ${user.name}")
+                    _uiState.update { it.copy(
+                        user = user,
+                        interests = user.interests,
+                        isLoading = false,
+                        error = null,
+                        showEditProfileDialog = false
+                    )}
+                    
+                    // Сохраняем обновленные данные в локальное хранилище
+                    preferencesManager.saveUser(user)
+                    
+                    // Обновляем данные с сервера после успешного обновления профиля
+                    refreshUserProfile()
+                }.onFailure { error ->
+                    Log.e("ProfileViewModel", "Failed to update profile: ${error.message}")
+                    _uiState.update { it.copy(
+                        error = error.message ?: "Не удалось обновить профиль",
+                        isLoading = false
+                    )}
+                }
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Exception during profile update: ${e.message}")
+                _uiState.update { it.copy(
+                    error = e.message ?: "Не удалось обновить профиль",
+                    isLoading = false
+                )}
             }
         }
     }

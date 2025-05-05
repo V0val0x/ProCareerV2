@@ -4,6 +4,12 @@ import com.example.procareerv2.data.local.PreferencesManager
 import com.example.procareerv2.data.remote.api.AuthApi
 import com.example.procareerv2.data.remote.api.TestApi
 import com.example.procareerv2.data.remote.api.VacancyApi
+import com.example.procareerv2.data.remote.dto.LoginRequest
+import com.example.procareerv2.data.remote.dto.LoginResponse
+import com.example.procareerv2.data.remote.dto.RegisterRequest
+import com.example.procareerv2.data.remote.dto.RegisterResponse
+import com.example.procareerv2.data.remote.dto.UserProfileRequest
+import com.example.procareerv2.data.remote.dto.UserProfileResponse
 import com.example.procareerv2.data.remote.interceptor.AuthInterceptor
 import com.example.procareerv2.data.repository.AuthRepositoryImpl
 import com.example.procareerv2.data.repository.TestRepositoryImpl
@@ -105,8 +111,35 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthApi(@AuthRetrofit retrofit: Retrofit): AuthApi {
-        return retrofit.create(AuthApi::class.java)
+    fun provideAuthApi(
+        @AuthRetrofit authRetrofit: Retrofit,
+        @MainRetrofit mainRetrofit: Retrofit
+    ): AuthApi {
+        // Используем @AuthRetrofit только для auth/login и auth/register
+        // Для операций с профилем (которые требуют авторизации) используем MainRetrofit
+        return object : AuthApi {
+            private val authApiService = authRetrofit.create(AuthApi::class.java)
+            private val mainApiService = mainRetrofit.create(AuthApi::class.java)
+
+            override suspend fun login(request: LoginRequest): LoginResponse {
+                return authApiService.login(request)
+            }
+
+            override suspend fun register(request: RegisterRequest): RegisterResponse {
+                return authApiService.register(request)
+            }
+
+            override suspend fun getUserProfile(userId: Int): UserProfileResponse {
+                return mainApiService.getUserProfile(userId)
+            }
+
+            override suspend fun updateUserProfile(
+                userId: Int, 
+                user: UserProfileRequest
+            ): UserProfileResponse {
+                return mainApiService.updateUserProfile(userId, user)
+            }
+        }
     }
 
     @Provides

@@ -1,6 +1,7 @@
 package com.example.procareerv2.data.local
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -9,6 +10,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -28,23 +30,39 @@ class UserPreferencesManager @Inject constructor(
     }
 
     suspend fun saveCredentials(email: String, password: String, rememberMe: Boolean) {
-        dataStore.edit { preferences ->
-            if (rememberMe) {
-                preferences[KEY_EMAIL] = email
-                preferences[KEY_PASSWORD] = password
-            } else {
-                preferences.remove(KEY_EMAIL)
-                preferences.remove(KEY_PASSWORD)
+        Log.d("UserPreferences", "Saving credentials: email=$email, rememberMe=$rememberMe")
+        try {
+            dataStore.edit { preferences ->
+                if (rememberMe) {
+                    preferences[KEY_EMAIL] = email
+                    preferences[KEY_PASSWORD] = password
+                    preferences[KEY_REMEMBER_ME] = true
+                    Log.d("UserPreferences", "Credentials saved with rememberMe=true")
+                } else {
+                    preferences.remove(KEY_EMAIL)
+                    preferences.remove(KEY_PASSWORD)
+                    preferences[KEY_REMEMBER_ME] = false
+                    Log.d("UserPreferences", "Credentials removed because rememberMe=false")
+                }
             }
-            preferences[KEY_REMEMBER_ME] = rememberMe
+            
+            // Проверяем, что данные действительно сохранились
+            val savedCredentials = getSavedCredentials().first()
+            Log.d("UserPreferences", "Verification after save - credentials in storage: email=${savedCredentials.email}, rememberMe=${savedCredentials.rememberMe}")
+        } catch (e: Exception) {
+            Log.e("UserPreferences", "Error saving credentials: ${e.message}", e)
         }
     }
 
     fun getSavedCredentials(): Flow<SavedCredentials> = dataStore.data.map { preferences ->
+        val email = preferences[KEY_EMAIL] ?: ""
+        val password = preferences[KEY_PASSWORD] ?: ""
+        val rememberMe = preferences[KEY_REMEMBER_ME] ?: false
+        Log.d("UserPreferences", "Getting saved credentials: email=$email, rememberMe=$rememberMe")
         SavedCredentials(
-            email = preferences[KEY_EMAIL] ?: "",
-            password = preferences[KEY_PASSWORD] ?: "",
-            rememberMe = preferences[KEY_REMEMBER_ME] ?: false
+            email = email,
+            password = password,
+            rememberMe = rememberMe
         )
     }
 
@@ -52,10 +70,13 @@ class UserPreferencesManager @Inject constructor(
         val email = preferences[KEY_EMAIL] ?: ""
         val password = preferences[KEY_PASSWORD] ?: ""
         val rememberMe = preferences[KEY_REMEMBER_ME] ?: false
-        rememberMe && email.isNotBlank() && password.isNotBlank()
+        val isValid = rememberMe && email.isNotBlank() && password.isNotBlank()
+        Log.d("UserPreferences", "Checking valid credentials: email=$email, rememberMe=$rememberMe, isValid=$isValid")
+        isValid
     }
 
     suspend fun clearCredentials() {
+        Log.d("UserPreferences", "Clearing all credentials")
         dataStore.edit { preferences ->
             preferences.remove(KEY_EMAIL)
             preferences.remove(KEY_PASSWORD)

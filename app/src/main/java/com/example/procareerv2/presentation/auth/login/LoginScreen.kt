@@ -1,5 +1,6 @@
 package com.example.procareerv2.presentation.auth.login
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +22,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,10 +44,10 @@ import android.content.Context
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import com.example.procareerv2.util.NetworkUtils
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(
@@ -59,14 +61,32 @@ fun LoginScreen(
     var selectedTabIndex by remember { mutableStateOf(0) }
     var showForgotPasswordDialog by remember { mutableStateOf(false) }
     var forgotPasswordMessage by remember { mutableStateOf("") }
+    var navigationAttempted by remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
+
+    Log.d("LoginScreen", "Composing LoginScreen with: isLoggedIn=${uiState.isLoggedIn}, email=${uiState.email}")
+    
+    DisposableEffect(key1 = true) {
+        Log.d("LoginScreen", "LoginScreen composed")
+        onDispose {
+            Log.d("LoginScreen", "LoginScreen disposed")
+        }
+    }
 
     LaunchedEffect(key1 = true) @androidx.annotation.RequiresPermission(android.Manifest.permission.ACCESS_NETWORK_STATE) {
         if (!NetworkUtils.isNetworkAvailable(context)) {
             showNoInternetDialog.value = true
         }
     }
+    
+    LaunchedEffect(uiState.isLoggedIn) {
+        if (uiState.isLoggedIn && !navigationAttempted) {
+            Log.d("LoginScreen", "*** NAVIGATION TRIGGERED FROM LAUNCHED EFFECT ***")
+            navigationAttempted = true
+            onLoginSuccess()
+        }
+    }
 
-    // Диалог отсутствия интернета
     if (showNoInternetDialog.value) {
         AlertDialog(
             onDismissRequest = { showNoInternetDialog.value = false },
@@ -80,167 +100,164 @@ fun LoginScreen(
         )
     }
 
-    LaunchedEffect(uiState.isLoggedIn) {
-        if (uiState.isLoggedIn) {
-            onLoginSuccess()
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Фиксированная верхняя часть - одинаковая для обоих экранов
-        Spacer(modifier = Modifier.height(48.dp)) // Фиксированный отступ сверху
+        Spacer(modifier = Modifier.height(48.dp)) 
 
-        // Логотип - фиксированный размер и отступы
         Image(
             painter = painterResource(id = R.drawable.logo2),
             contentDescription = "App Logo",
-            modifier = Modifier
-                .size(160.dp)
-                .padding(bottom = 16.dp)
+            modifier = Modifier.size(240.dp)
         )
 
-        Spacer(modifier = Modifier.height(40.dp)) // Фиксированный отступ
+        Spacer(modifier = Modifier.height(32.dp)) 
 
-        // Вкладки - фиксированное положение
         TabRow(
             selectedTabIndex = selectedTabIndex,
-            containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.primary
         ) {
             Tab(
                 selected = selectedTabIndex == 0,
                 onClick = { selectedTabIndex = 0 },
-                text = {
-                    Text(
-                        "Войти",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
-                        )
-                    )
-                }
+                text = { Text("Вход") }
             )
             Tab(
                 selected = selectedTabIndex == 1,
-                onClick = {
-                    selectedTabIndex = 1
-                    onNavigateToRegister()
-                },
-                text = {
+                onClick = { onNavigateToRegister() },
+                text = { Text("Регистрация") }
+            )
+        }
+
+        Column(modifier = Modifier.padding(top = 32.dp)) {
+            ProCareerTextField(
+                value = uiState.email,
+                onValueChange = viewModel::onEmailChanged,
+                label = "Email",
+                leadingIcon = Icons.Default.Email,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Email,
+                    imeAction = ImeAction.Next
+                ),
+                isError = uiState.emailError != null,
+                errorMessage = uiState.emailError,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            ProCareerTextField(
+                value = uiState.password,
+                onValueChange = viewModel::onPasswordChanged,
+                label = "Пароль",
+                leadingIcon = Icons.Default.Lock,
+                isPassword = true,
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Done
+                ),
+                isError = uiState.passwordError != null,
+                errorMessage = uiState.passwordError,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = uiState.rememberMe,
+                        onCheckedChange = viewModel::onRememberMeChanged
+                    )
                     Text(
-                        "Регистрация",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                        text = "Запомнить меня",
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+
+                Text(
+                    text = "Забыли пароль?",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        showForgotPasswordDialog = true
+                    }
+                )
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            ProCareerButton(
+                text = "Войти",
+                onClick = {
+                    coroutineScope.launch {
+                        Log.d("LoginScreen", "Login button clicked, starting login")
+                        val result = viewModel.loginDirect(uiState.email, uiState.password)
+                        
+                        result.onSuccess { 
+                            Log.d("LoginScreen", "*** DIRECT NAVIGATION AFTER SUCCESSFUL LOGIN ***")
+                            onLoginSuccess() 
+                        }
+                    }
+                },
+                enabled = !uiState.isLoading,
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            if (uiState.error != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = uiState.error ?: "",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+    }
+
+    if (showForgotPasswordDialog) {
+        AlertDialog(
+            onDismissRequest = { showForgotPasswordDialog = false },
+            title = { Text("Сброс пароля") },
+            text = {
+                Column {
+                    Text("Введите ваш email для сброса пароля")
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ProCareerTextField(
+                        value = forgotPasswordMessage,
+                        onValueChange = { forgotPasswordMessage = it },
+                        label = "Email",
+                        leadingIcon = Icons.Default.Email,
+                        keyboardOptions = KeyboardOptions.Default.copy(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Done
                         )
                     )
                 }
-            )
-        }
-
-        // Изменяемая часть - содержимое экрана входа
-        Spacer(modifier = Modifier.height(32.dp))
-
-        // Email field
-        ProCareerTextField(
-            value = uiState.email,
-            onValueChange = { viewModel.onEmailChanged(it) },
-            label = "Email",
-            leadingIcon = Icons.Default.Email,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
-            ),
-            isError = uiState.emailError != null,
-            errorMessage = uiState.emailError,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Password field
-        ProCareerTextField(
-            value = uiState.password,
-            onValueChange = { viewModel.onPasswordChanged(it) },
-            label = "Пароль",
-            leadingIcon = Icons.Default.Lock,
-            isPassword = true,
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Password,
-                imeAction = ImeAction.Done
-            ),
-            isError = uiState.passwordError != null,
-            errorMessage = uiState.passwordError,
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        // Remember me checkbox
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable { viewModel.onRememberMeChanged(!uiState.rememberMe) }
-            ) {
-                Checkbox(
-                    checked = uiState.rememberMe,
-                    onCheckedChange = { viewModel.onRememberMeChanged(it) }
-                )
-                Text(
-                    text = "Запомнить меня",
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        // TODO: Implement password reset logic
+                        showForgotPasswordDialog = false
+                        forgotPasswordMessage = ""
+                    }
+                ) {
+                    Text("Отправить")
+                }
+            },
+            dismissButton = {
+                Button(onClick = { showForgotPasswordDialog = false }) {
+                    Text("Отмена")
+                }
             }
-            
-            Text(
-                text = "Забыли пароль?",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                    if (uiState.email.isNotBlank() && android.util.Patterns.EMAIL_ADDRESS.matcher(uiState.email).matches()) {
-                        forgotPasswordMessage = "Новый пароль отправлен на ${uiState.email}"
-                    } else {
-                        forgotPasswordMessage = "Такой почты не найдено"
-                    }
-                    showForgotPasswordDialog = true
-                }
-            )
-        }
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Login button
-        ProCareerButton(
-            text = "Войти",
-            onClick = { viewModel.login() },
-            enabled = !uiState.isLoading,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(56.dp)
         )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        if (showForgotPasswordDialog) {
-            AlertDialog(
-                onDismissRequest = { showForgotPasswordDialog = false },
-                title = { Text("Восстановление пароля") },
-                text = { Text(forgotPasswordMessage) },
-                confirmButton = {
-                    Button(onClick = { showForgotPasswordDialog = false }) {
-                        Text("OK")
-                    }
-                }
-            )
-        }
-
     }
 }

@@ -36,6 +36,7 @@ import java.io.File
 import com.example.procareerv2.R
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
 import com.example.procareerv2.presentation.profile.components.EditProfileSheet
+import android.util.Log
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -53,6 +54,13 @@ fun ProfileScreen(
     var isSubscribed by remember { mutableStateOf(true) }
     var showSnackbar by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
+
+    // При первом открытии экрана обновляем данные с сервера
+    LaunchedEffect(key1 = Unit) {
+        Log.d("ProfileScreen", "Screen launched, refreshing user profile")
+        viewModel.refreshUserProfile()
+    }
 
     Scaffold(
         topBar = {
@@ -121,7 +129,6 @@ fun ProfileScreen(
                     .clip(RoundedCornerShape(24.dp)),
                 contentAlignment = Alignment.Center
             ) {
-                val context = LocalContext.current
                 val profileImage = uiState.user?.profileImage
                 val imageModel = if (profileImage != null) {
                     Uri.parse(profileImage)
@@ -408,7 +415,7 @@ fun ProfileScreen(
                 user = user,
                 onDismiss = { viewModel.hideEditProfileDialog() },
                 onSave = { name: String, position: String, imageUri: Uri? ->
-                    viewModel.updateUserProfile(name, position, imageUri?.toString())
+                    viewModel.updateUserProfile(name, position, imageUri)
                 },
                 error = uiState.error
             )

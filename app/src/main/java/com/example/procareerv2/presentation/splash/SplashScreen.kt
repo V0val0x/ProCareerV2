@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.R
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun SplashScreen(
@@ -35,76 +35,49 @@ fun SplashScreen(
     onNavigateToLogin: () -> Unit,
     viewModel: SplashViewModel = hiltViewModel()
 ) {
-    var isLoading by remember { mutableStateOf(true) }
-
-    LaunchedEffect(key1 = true) {
-        // Добавляем таймаут для проверки логина
-        val result = withTimeoutOrNull(1000) { // 1 секунды таймаут
-            try {
-                if (viewModel.isFirstLaunch()) {
-                    onNavigateToOnboarding()
-                } else {
-                    val isLoggedIn = viewModel.isLoggedIn()
-                    if (isLoggedIn) {
-                        onNavigateToHome()
-                    } else {
-                        onNavigateToLogin()
-                    }
-                }
-                true
-            } catch (e: Exception) {
-                false
-            }
-        }
-
-        // Если таймаут истек или произошла ошибка, переходим на экран логина
-        if (result != true) {
-            delay(1000) // Небольшая задержка для отображения сплэш-экрана
-            onNavigateToLogin()
-        }
-
-        isLoading = false
-    }
-
+    // Получаем состояние авторизации
+    val authState by viewModel.authState.collectAsState()
+    
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White),
-        contentAlignment = Alignment.Center
+            .background(MaterialTheme.colorScheme.primary)
     ) {
         Column(
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Logo
             Image(
                 painter = painterResource(id = R.drawable.logo),
-                contentDescription = "App Logo",
+                contentDescription = "Logo",
                 modifier = Modifier.size(120.dp)
             )
-
-            // App name
-            Text(
-                text = "ProКарьеру",
-                style = MaterialTheme.typography.displayMedium,
-                color = MaterialTheme.colorScheme.primary
+            
+            CircularProgressIndicator(
+                modifier = Modifier.padding(16.dp),
+                color = Color.White
             )
-
-            // Tagline
-            Text(
-                text = "Твой карьерный путь начинается здесь...",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 16.dp)
-            )
-
-            // Loading indicator
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.padding(top = 32.dp),
-                    color = MaterialTheme.colorScheme.primary
-                )
+        }
+    }
+    
+    // Обрабатываем состояние авторизации
+    LaunchedEffect(authState) {
+        when (authState) {
+            AuthState.FirstLaunch -> {
+                delay(1000) // Задержка для показа сплэш-экрана
+                onNavigateToOnboarding()
+            }
+            AuthState.Authenticated -> {
+                delay(1000) // Задержка для показа сплэш-экрана
+                onNavigateToHome()
+            }
+            AuthState.Unauthenticated -> {
+                delay(1000) // Задержка для показа сплэш-экрана
+                onNavigateToLogin()
+            }
+            AuthState.Loading -> {
+                // Продолжаем показывать загрузчик
             }
         }
     }
