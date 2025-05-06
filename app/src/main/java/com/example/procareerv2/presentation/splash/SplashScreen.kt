@@ -41,7 +41,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.primary)
+            .background(Color.White)
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -56,7 +56,7 @@ fun SplashScreen(
             
             CircularProgressIndicator(
                 modifier = Modifier.padding(16.dp),
-                color = Color.White
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

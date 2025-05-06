@@ -222,6 +222,18 @@ fun ProfileScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            // Specialization (if available)
+            if (!uiState.user?.specialization.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = uiState.user?.specialization ?: "",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // Interests Section
@@ -414,8 +426,8 @@ fun ProfileScreen(
             EditProfileDialog(
                 user = user,
                 onDismiss = { viewModel.hideEditProfileDialog() },
-                onSave = { name: String, position: String, imageUri: Uri? ->
-                    viewModel.updateUserProfile(name, position, imageUri)
+                onSave = { name: String, position: String, specialization: String, imageUri: Uri? ->
+                    viewModel.updateUserProfile(name, position, specialization, imageUri)
                 },
                 error = uiState.error
             )

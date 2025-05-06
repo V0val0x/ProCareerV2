@@ -17,10 +17,13 @@ import com.example.procareerv2.data.repository.VacancyRepositoryImpl
 import com.example.procareerv2.domain.repository.AuthRepository
 import com.example.procareerv2.domain.repository.TestRepository
 import com.example.procareerv2.domain.repository.VacancyRepository
-import dagger.Module
-import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
+import dagger.Module
+import dagger.Provides
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -111,12 +114,18 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideCoroutineScope(): CoroutineScope {
+        return CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    }
+
+    @Provides
+    @Singleton
     fun provideAuthApi(
         @AuthRetrofit authRetrofit: Retrofit,
         @MainRetrofit mainRetrofit: Retrofit
     ): AuthApi {
-        // Используем @AuthRetrofit только для auth/login и auth/register
-        // Для операций с профилем (которые требуют авторизации) используем MainRetrofit
+        // u0418u0441u043fu043eu043bu044cu0437u0443u0435u043c @AuthRetrofit u0442u043eu043bu044cu043au043e u0434u043bu044f auth/login u0438 auth/register
+        // u0414u043bu044f u043eu043fu0435u0440u0430u0446u0438u0439 u0441 u043fu0440u043eu0444u0438u043bu0435u043c (u043au043eu0442u043eu0440u044bu0435 u0442u0440u0435u0431u0443u044eu0442 u0430u0432u0442u043eu0440u0438u0437u0430u0446u0438u0438) u0438u0441u043fu043eu043bu044cu0437u0443u0435u043c MainRetrofit
         return object : AuthApi {
             private val authApiService = authRetrofit.create(AuthApi::class.java)
             private val mainApiService = mainRetrofit.create(AuthApi::class.java)
@@ -156,8 +165,8 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(authApi: AuthApi, preferencesManager: PreferencesManager): AuthRepository {
-        return AuthRepositoryImpl(authApi, preferencesManager)
+    fun provideAuthRepository(authApi: AuthApi, preferencesManager: PreferencesManager, externalScope: CoroutineScope): AuthRepository {
+        return AuthRepositoryImpl(authApi, preferencesManager, externalScope)
     }
 
     @Provides

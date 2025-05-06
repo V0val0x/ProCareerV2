@@ -42,6 +42,7 @@ class ProfileViewModel @Inject constructor(
         email = "example@mail.com",
         token = "",
         position = "Front-end разработчик",
+        specialization = "",
         profileImage = null,
         interests = emptyList()
     )
@@ -55,10 +56,12 @@ class ProfileViewModel @Inject constructor(
             val storedUser = preferencesManager.getUserFlow().first()
             if (storedUser != null) {
                 _uiState.update { it.copy(user = storedUser, interests = storedUser.interests) }
+                // Immediately fetch updated profile data from server
+                fetchUserProfile(storedUser.id)
+            } else {
+                Log.d("ProfileViewModel", "No stored user found, using default")
+                _uiState.update { it.copy(user = defaultUser) }
             }
-            
-            // Затем обновляем данные с сервера
-            refreshUserProfile()
         }
     }
     
@@ -157,9 +160,9 @@ class ProfileViewModel @Inject constructor(
         _uiState.update { it.clearError() }
     }
 
-    fun updateUserProfile(name: String, position: String, profileImage: Uri?) {
+    fun updateUserProfile(name: String, position: String, specialization: String, profileImage: Uri?) {
         viewModelScope.launch {
-            Log.d("ProfileViewModel", "Updating profile: name=$name, position=$position, imageUri=$profileImage")
+            Log.d("ProfileViewModel", "Updating profile: name=$name, position=$position, specialization=$specialization, imageUri=$profileImage")
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 val currentUser = uiState.value.user ?: throw Exception("Пользователь не найден")
@@ -168,7 +171,8 @@ class ProfileViewModel @Inject constructor(
                 // Создаем обновленного пользователя с новыми данными, сохраняя существующую картинку профиля
                 val updatedUser = currentUser.copy(
                     name = name,
-                    position = position
+                    position = position,
+                    specialization = specialization
                     // Обратите внимание: profileImage из Uri теперь не передается,
                     // так как сервер не принимает этот параметр
                 )

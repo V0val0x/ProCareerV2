@@ -9,6 +9,8 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -32,17 +34,19 @@ class UserPreferencesManager @Inject constructor(
     suspend fun saveCredentials(email: String, password: String, rememberMe: Boolean) {
         Log.d("UserPreferences", "Saving credentials: email=$email, rememberMe=$rememberMe")
         try {
-            dataStore.edit { preferences ->
-                if (rememberMe) {
-                    preferences[KEY_EMAIL] = email
-                    preferences[KEY_PASSWORD] = password
-                    preferences[KEY_REMEMBER_ME] = true
-                    Log.d("UserPreferences", "Credentials saved with rememberMe=true")
-                } else {
-                    preferences.remove(KEY_EMAIL)
-                    preferences.remove(KEY_PASSWORD)
-                    preferences[KEY_REMEMBER_ME] = false
-                    Log.d("UserPreferences", "Credentials removed because rememberMe=false")
+            withContext(NonCancellable) {
+                dataStore.edit { preferences ->
+                    if (rememberMe) {
+                        preferences[KEY_EMAIL] = email
+                        preferences[KEY_PASSWORD] = password
+                        preferences[KEY_REMEMBER_ME] = true
+                        Log.d("UserPreferences", "Credentials saved with rememberMe=true")
+                    } else {
+                        preferences.remove(KEY_EMAIL)
+                        preferences.remove(KEY_PASSWORD)
+                        preferences[KEY_REMEMBER_ME] = false
+                        Log.d("UserPreferences", "Credentials removed because rememberMe=false")
+                    }
                 }
             }
             

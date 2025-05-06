@@ -7,6 +7,9 @@ import com.example.procareerv2.data.local.PreferencesManager
 import com.example.procareerv2.data.local.UserPreferencesManager
 import com.example.procareerv2.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
@@ -20,7 +23,8 @@ import javax.inject.Inject
 class SplashViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val preferencesManager: PreferencesManager,
-    private val userPreferencesManager: UserPreferencesManager
+    private val userPreferencesManager: UserPreferencesManager,
+    private val externalScope: CoroutineScope
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow<AuthState>(AuthState.Loading)
@@ -31,48 +35,66 @@ class SplashViewModel @Inject constructor(
     }
 
     private fun checkAuthentication() {
+        // Start a timer to force transition after max timeout no matter what
+        viewModelScope.launch {
+            // Force transition after 3 seconds, regardless of what happens
+            kotlinx.coroutines.delay(3000) 
+            if (_authState.value == AuthState.Loading) {
+                Log.e("SplashViewModel", "Forcing transition due to timeout")
+                _authState.value = AuthState.Unauthenticated
+            }
+        }
+        
+        // Use a separate coroutine for actual authentication
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                // Проверяем, первый ли это запуск
+                // First quickly check if this is the first launch
                 val isFirst = preferencesManager.isFirstLaunch()
                 if (isFirst) {
+                    Log.d("SplashViewModel", "This is the first app launch")
                     _authState.value = AuthState.FirstLaunch
                     return@launch
                 }
                 
-                // Проверяем, авторизован ли пользователь уже
+                // Then check if user is already logged in locally
                 val isAlreadyLoggedIn = authRepository.isLoggedIn()
                 if (isAlreadyLoggedIn) {
-                    Log.d("SplashViewModel", "User is already logged in")
+                    Log.d("SplashViewModel", "User is already logged in locally")
                     _authState.value = AuthState.Authenticated
                     return@launch
                 }
                 
-                // Проверяем наличие сохраненных учетных данных
-                val credentials = userPreferencesManager.getSavedCredentials().first()
-                Log.d("SplashViewModel", "Saved credentials check: email=${credentials.email}, rememberMe=${credentials.rememberMe}")
+                // Finally check for saved credentials
+                val credentials = try {
+                    userPreferencesManager.getSavedCredentials().first()
+                } catch (e: Exception) {
+                    Log.e("SplashViewModel", "Error getting saved credentials: ${e.message}")
+                    null
+                }
                 
-                if (credentials.rememberMe && credentials.email.isNotBlank() && credentials.password.isNotBlank()) {
-                    // Если есть сохраненные данные, пытаемся выполнить вход
-                    Log.d("SplashViewModel", "Attempting auto-login with saved credentials: ${credentials.email}")
+                if (credentials != null && credentials.rememberMe && 
+                    credentials.email.isNotBlank() && credentials.password.isNotBlank()) {
                     
-                    val loginResult = authRepository.login(credentials.email, credentials.password)
-                    if (loginResult.isSuccess) {
-                        Log.d("SplashViewModel", "Auto-login successful!")
-                        // Важно: сохраняем флаг "rememberMe", чтобы он не потерялся при входе
-                        userPreferencesManager.saveCredentials(credentials.email, credentials.password, true)
-                        _authState.value = AuthState.Authenticated
-                    } else {
-                        Log.e("SplashViewModel", "Auto-login failed: ${loginResult.exceptionOrNull()?.message}")
-                        // Если автоматический вход не удался, возможно, учетные данные устарели
+                    Log.d("SplashViewModel", "Attempting auto-login with saved credentials")
+                    try {
+                        val loginResult = authRepository.login(credentials.email, credentials.password) 
+                        if (loginResult.isSuccess) {
+                            Log.d("SplashViewModel", "Auto-login successful!")
+                            _authState.value = AuthState.Authenticated
+                        } else {
+                            Log.e("SplashViewModel", "Auto-login failed")
+                            _authState.value = AuthState.Unauthenticated
+                        }
+                    } catch (e: Exception) {
+                        Log.e("SplashViewModel", "Auto-login exception: ${e.message}")
                         _authState.value = AuthState.Unauthenticated
                     }
                 } else {
-                    Log.d("SplashViewModel", "No valid saved credentials for auto-login")
+                    Log.d("SplashViewModel", "No valid saved credentials")
                     _authState.value = AuthState.Unauthenticated
                 }
             } catch (e: Exception) {
-                Log.e("SplashViewModel", "Error during authentication check: ${e.message}", e)
+                Log.e("SplashViewModel", "Authentication check failed: ${e.message}")
                 _authState.value = AuthState.Unauthenticated
             }
         }

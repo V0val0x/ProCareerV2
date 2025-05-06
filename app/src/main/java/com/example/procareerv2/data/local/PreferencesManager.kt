@@ -36,6 +36,7 @@ class PreferencesManager @Inject constructor(
         private val USER_TOKEN = stringPreferencesKey("user_token")
         private val USER_PROFILE_IMAGE = stringPreferencesKey("user_profile_image")
         private val USER_POSITION = stringPreferencesKey("user_position")
+        private val USER_SPECIALIZATION = stringPreferencesKey("user_specialization")
         private val USER_INTERESTS = stringPreferencesKey("user_interests")
         private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
         private val gson = Gson()
@@ -57,6 +58,7 @@ class PreferencesManager @Inject constructor(
             preferences[USER_TOKEN] = user.token
             user.profileImage?.let { preferences[USER_PROFILE_IMAGE] = it }
             user.position?.let { preferences[USER_POSITION] = it }
+            user.specialization?.let { preferences[USER_SPECIALIZATION] = it }
             preferences[USER_INTERESTS] = gson.toJson(user.interests)
         }
     }
@@ -104,6 +106,7 @@ class PreferencesManager @Inject constructor(
                     token = preferences[USER_TOKEN] ?: "",
                     profileImage = preferences[USER_PROFILE_IMAGE],
                     position = preferences[USER_POSITION],
+                    specialization = preferences[USER_SPECIALIZATION],
                     interests = interests
                 )
             } else {
@@ -113,32 +116,37 @@ class PreferencesManager @Inject constructor(
     }
 
     suspend fun getUser(): User? {
-        var user: User? = null
-        dataStore.data.map { preferences ->
-            if (preferences[USER_ID] != null) {
-                val interestsJson = preferences[USER_INTERESTS] ?: "[]"
-                val interestsType = object : TypeToken<List<Interest>>() {}.type
-                val interests = gson.fromJson<List<Interest>>(interestsJson, interestsType)
+        return try {
+            dataStore.data.first().let { preferences ->
+                if (preferences[USER_ID] != null) {
+                    val interestsJson = preferences[USER_INTERESTS] ?: "[]"
+                    val interestsType = object : TypeToken<List<Interest>>() {}.type
+                    val interests = gson.fromJson<List<Interest>>(interestsJson, interestsType)
 
-                // Get user ID and handle type conversion
-                val userId = try {
-                    preferences[USER_ID].toString().toInt()
-                } catch (e: Exception) {
-                    -1
+                    // Get user ID and handle type conversion
+                    val userId = try {
+                        preferences[USER_ID].toString().toInt()
+                    } catch (e: Exception) {
+                        -1
+                    }
+
+                    User(
+                        id = userId,
+                        name = preferences[USER_NAME] ?: "",
+                        email = preferences[USER_EMAIL] ?: "",
+                        token = preferences[USER_TOKEN] ?: "",
+                        profileImage = preferences[USER_PROFILE_IMAGE],
+                        position = preferences[USER_POSITION],
+                        specialization = preferences[USER_SPECIALIZATION],
+                        interests = interests
+                    )
+                } else {
+                    null
                 }
-
-                user = User(
-                    id = userId,
-                    name = preferences[USER_NAME] ?: "",
-                    email = preferences[USER_EMAIL] ?: "",
-                    token = preferences[USER_TOKEN] ?: "",
-                    profileImage = preferences[USER_PROFILE_IMAGE],
-                    position = preferences[USER_POSITION],
-                    interests = interests
-                )
             }
-        }.collect { }
-        return user
+        } catch (e: Exception) {
+            null
+        }
     }
 
     suspend fun clearUser() {

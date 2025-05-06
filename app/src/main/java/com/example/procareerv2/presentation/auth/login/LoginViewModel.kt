@@ -7,6 +7,9 @@ import com.example.procareerv2.data.local.UserPreferencesManager
 import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.domain.repository.AuthRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -28,7 +31,8 @@ data class LoginUiState(
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val userPreferencesManager: UserPreferencesManager
+    private val userPreferencesManager: UserPreferencesManager,
+    private val externalScope: CoroutineScope
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginUiState())
@@ -69,16 +73,25 @@ class LoginViewModel @Inject constructor(
         Log.d("LoginViewModel", "Starting login process")
 
         viewModelScope.launch {
-            authRepository.login(_uiState.value.email, _uiState.value.password)
-                .onSuccess { user ->
+            try {
+                val result = authRepository.login(_uiState.value.email, _uiState.value.password)
+                result.onSuccess { user ->
                     Log.d("LoginViewModel", "Login successful: ${user.id}")
-                    userPreferencesManager.saveCredentials(
-                        _uiState.value.email,
-                        _uiState.value.password,
-                        _uiState.value.rememberMe
-                    )
+                    // Save credentials in the external scope with NonCancellable context
+                    externalScope.launch(Dispatchers.IO + NonCancellable) {
+                        try {
+                            userPreferencesManager.saveCredentials(
+                                _uiState.value.email,
+                                _uiState.value.password,
+                                _uiState.value.rememberMe
+                            )
+                            Log.d("LoginViewModel", "Credentials saved successfully, rememberMe: ${_uiState.value.rememberMe}")
+                        } catch (e: Exception) {
+                            Log.e("LoginViewModel", "Failed to save credentials: ${e.message}")
+                        }
+                    }
                     
-                    // Устанавливаем флаг успешного входа
+                    // Update UI state
                     _uiState.update { it.copy(isLoading = false, isLoggedIn = true) }
                     Log.d("LoginViewModel", "Updated state - isLoggedIn: ${_uiState.value.isLoggedIn}")
                 }
@@ -91,6 +104,15 @@ class LoginViewModel @Inject constructor(
                         )
                     }
                 }
+            } catch (e: Exception) {
+                Log.e("LoginViewModel", "Exception during login: ${e.message}")
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        error = e.message ?: "Непредвиденная ошибка входа"
+                    )
+                }
+            }
         }
     }
 
@@ -106,13 +128,23 @@ class LoginViewModel @Inject constructor(
             
             result.onSuccess { user ->
                 Log.d("LoginViewModel", "Direct login successful: ${user.id}")
-                userPreferencesManager.saveCredentials(
-                    email,
-                    password,
-                    _uiState.value.rememberMe
-                )
+                // Save credentials in the external scope with NonCancellable context
+                externalScope.launch(Dispatchers.IO + NonCancellable) {
+                    try {
+                        val rememberMe = _uiState.value.rememberMe
+                        Log.d("LoginViewModel", "Saving credentials with rememberMe=$rememberMe")
+                        userPreferencesManager.saveCredentials(
+                            email,
+                            password,
+                            rememberMe
+                        )
+                        Log.d("LoginViewModel", "Credentials saved successfully")
+                    } catch (e: Exception) {
+                        Log.e("LoginViewModel", "Error saving credentials: ${e.message}")
+                    }
+                }
                 
-                // Устанавливаем флаг успешного входа
+                // Update UI state
                 _uiState.update { it.copy(isLoading = false, isLoggedIn = true) }
                 Log.d("LoginViewModel", "Updated state after direct login - isLoggedIn: ${_uiState.value.isLoggedIn}")
             }

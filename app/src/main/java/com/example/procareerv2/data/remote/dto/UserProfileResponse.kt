@@ -5,16 +5,13 @@ import com.example.procareerv2.domain.model.User
 import com.google.gson.annotations.SerializedName
 
 data class UserProfileResponse(
-    @SerializedName("status") val status: String,
-    @SerializedName("data") val data: UserProfileData
-)
-
-data class UserProfileData(
     @SerializedName("id") val id: Int,
     @SerializedName("name") val name: String,
     @SerializedName("email") val email: String,
-    @SerializedName("profile_image") val profileImage: String?,
-    @SerializedName("position") val position: String?,
+    @SerializedName("profile_image") val profileImage: String? = null,
+    @SerializedName("position") val position: String? = null,
+    @SerializedName("grade") val grade: String? = null,
+    @SerializedName("specialization") val specialization: String? = null,
     @SerializedName("interests") val interests: List<InterestDto> = emptyList()
 ) {
     fun toDomainUser(token: String): User {
@@ -24,7 +21,8 @@ data class UserProfileData(
             email = email,
             token = token,
             profileImage = profileImage,
-            position = position,
+            position = position ?: grade,  // If position is null, use grade
+            specialization = specialization,
             interests = interests.map { it.toDomainInterest() }
         )
     }

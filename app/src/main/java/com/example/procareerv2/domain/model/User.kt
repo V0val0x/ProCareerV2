@@ -7,5 +7,6 @@ data class User(
     val token: String,
     val profileImage: String? = null,
     val position: String? = null,
+    val specialization: String? = null,
     val interests: List<Interest> = emptyList()
 )

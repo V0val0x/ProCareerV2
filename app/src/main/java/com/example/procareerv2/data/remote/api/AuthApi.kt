@@ -14,10 +14,10 @@ interface AuthApi {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): RegisterResponse
 
-    @GET("users/{userId}/profile")
+    @GET("recommendations/users/{userId}")
     suspend fun getUserProfile(@Path("userId") userId: Int): UserProfileResponse
 
-    @PUT("users/{userId}/profile")
+    @PUT("recommendations/users/{userId}")
     suspend fun updateUserProfile(
         @Path("userId") userId: Int,
         @Body user: UserProfileRequest

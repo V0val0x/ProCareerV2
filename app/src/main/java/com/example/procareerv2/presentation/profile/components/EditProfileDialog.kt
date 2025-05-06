@@ -35,11 +35,12 @@ import java.io.File
 fun EditProfileDialog(
     user: User,
     onDismiss: () -> Unit,
-    onSave: (String, String, Uri?) -> Unit,
+    onSave: (String, String, String, Uri?) -> Unit,
     error: String? = null
 ) {
     var name by remember { mutableStateOf(user.name) }
     var position by remember { mutableStateOf(user.position ?: "") }
+    var specialization by remember { mutableStateOf(user.specialization ?: "") }
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
     var showImagePickerDialog by remember { mutableStateOf(false) }
     
@@ -217,11 +218,19 @@ fun EditProfileDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+                
+                OutlinedTextField(
+                    value = specialization,
+                    onValueChange = { specialization = it },
+                    label = { Text("Специализация") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         },
         confirmButton = {
             Button(
-                onClick = { onSave(name, position, selectedImageUri) },
+                onClick = { onSave(name, position, specialization, selectedImageUri) },
                 enabled = name.isNotBlank()
             ) {
                 Text("Сохранить")
