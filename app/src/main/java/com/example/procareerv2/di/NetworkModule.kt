@@ -2,6 +2,7 @@ package com.example.procareerv2.di
 
 import com.example.procareerv2.data.local.PreferencesManager
 import com.example.procareerv2.data.remote.api.AuthApi
+import com.example.procareerv2.data.remote.api.RoadmapApi
 import com.example.procareerv2.data.remote.api.TestApi
 import com.example.procareerv2.data.remote.api.VacancyApi
 import com.example.procareerv2.data.remote.dto.LoginRequest
@@ -12,9 +13,11 @@ import com.example.procareerv2.data.remote.dto.UserProfileRequest
 import com.example.procareerv2.data.remote.dto.UserProfileResponse
 import com.example.procareerv2.data.remote.interceptor.AuthInterceptor
 import com.example.procareerv2.data.repository.AuthRepositoryImpl
+import com.example.procareerv2.data.repository.RoadmapRepositoryImpl
 import com.example.procareerv2.data.repository.TestRepositoryImpl
 import com.example.procareerv2.data.repository.VacancyRepositoryImpl
 import com.example.procareerv2.domain.repository.AuthRepository
+import com.example.procareerv2.domain.repository.RoadmapRepository
 import com.example.procareerv2.domain.repository.TestRepository
 import com.example.procareerv2.domain.repository.VacancyRepository
 import dagger.hilt.InstallIn
@@ -162,6 +165,12 @@ object NetworkModule {
     fun provideVacancyApi(@MainRetrofit retrofit: Retrofit): VacancyApi {
         return retrofit.create(VacancyApi::class.java)
     }
+    
+    @Provides
+    @Singleton
+    fun provideRoadmapApi(@MainRetrofit retrofit: Retrofit): RoadmapApi {
+        return retrofit.create(RoadmapApi::class.java)
+    }
 
     @Provides
     @Singleton
@@ -179,5 +188,11 @@ object NetworkModule {
     @Singleton
     fun provideVacancyRepository(vacancyApi: VacancyApi): VacancyRepository {
         return VacancyRepositoryImpl(vacancyApi)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideRoadmapRepository(roadmapApi: RoadmapApi): RoadmapRepository {
+        return RoadmapRepositoryImpl(roadmapApi)
     }
 }

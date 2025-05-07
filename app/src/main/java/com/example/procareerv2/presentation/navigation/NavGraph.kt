@@ -17,8 +17,9 @@ import com.example.procareerv2.presentation.auth.register.RegisterScreen
 import com.example.procareerv2.presentation.home.HomeScreen
 import com.example.procareerv2.presentation.onboarding.OnboardingScreen
 import com.example.procareerv2.presentation.profile.ProfileScreen
-import com.example.procareerv2.presentation.roadmap.RoadmapListScreen
-import com.example.procareerv2.presentation.roadmap.RoadmapScreen
+import com.example.procareerv2.presentation.roadmap.RoadmapStatsScreen
+import com.example.procareerv2.presentation.roadmap.RoadmapThemesScreen
+import com.example.procareerv2.presentation.roadmap.RoadmapSkillsScreen
 import com.example.procareerv2.presentation.splash.SplashScreen
 import com.example.procareerv2.presentation.test.TestDetailScreen
 import com.example.procareerv2.presentation.test.TestListScreen
@@ -39,9 +40,10 @@ sealed class Screen(val route: String) {
     object TestQuestion : Screen("test_question/{testId}") {
         fun createRoute(testId: Int) = "test_question/$testId"
     }
-    object RoadmapList : Screen("roadmap_list")
-    object RoadmapDetail : Screen("roadmap/{roadmapId}") {
-        fun createRoute(roadmapId: Int) = "roadmap/$roadmapId"
+    object RoadmapStats : Screen("roadmap_stats")
+    object RoadmapThemes : Screen("roadmap_themes")
+    object RoadmapSkills : Screen("roadmap_skills/{themeId}") {
+        fun createRoute(themeId: Int) = "roadmap_skills/$themeId"
     }
     object Profile : Screen("profile")
 }
@@ -146,7 +148,7 @@ fun NavGraph(navController: NavHostController) {
                     navController.navigate(Screen.TestList.route)
                 },
                 onNavigateToRoadmap = {
-                    navController.navigate(Screen.RoadmapList.route)
+                    navController.navigate(Screen.RoadmapStats.route)
                 },
                 onNavigateToProfile = {
                     navController.navigate(Screen.Profile.route)
@@ -270,23 +272,97 @@ fun NavGraph(navController: NavHostController) {
             )
         }
 
-        composable(Screen.RoadmapList.route) {
-            RoadmapListScreen(
-                onNavigateToRoadmap = { roadmapId ->
-                    navController.navigate(Screen.RoadmapDetail.createRoute(roadmapId))
+        composable(Screen.RoadmapStats.route) {
+            RoadmapStatsScreen(
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                onNavigateToRoadmapThemes = {
+                    navController.navigate(Screen.RoadmapThemes.route)
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.RoadmapStats.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVacancies = {
+                    navController.navigate(Screen.VacancyList.route) {
+                        popUpTo(Screen.RoadmapStats.route) { inclusive = true }
+                    }
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.RoadmapStats.route) { inclusive = true }
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.RoadmapStats.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.RoadmapThemes.route) {
+            RoadmapThemesScreen(
+                onNavigateBack = {
+                    navController.navigateUp()
+                },
+                onNavigateToThemeDetails = { themeId ->
+                    navController.navigate(Screen.RoadmapSkills.createRoute(themeId))
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.RoadmapThemes.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVacancies = {
+                    navController.navigate(Screen.VacancyList.route) {
+                        popUpTo(Screen.RoadmapThemes.route) { inclusive = true }
+                    }
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.RoadmapThemes.route) { inclusive = true }
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.RoadmapThemes.route) { inclusive = true }
+                    }
                 }
             )
         }
 
         composable(
-            route = Screen.RoadmapDetail.route,
+            route = Screen.RoadmapSkills.route,
             arguments = listOf(
-                navArgument("roadmapId") { type = NavType.IntType }
+                navArgument("themeId") { type = NavType.IntType }
             )
         ) {
-            RoadmapScreen(
+            RoadmapSkillsScreen(
                 onNavigateBack = {
                     navController.navigateUp()
+                },
+                onNavigateToHome = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.RoadmapSkills.route) { inclusive = true }
+                    }
+                },
+                onNavigateToVacancies = {
+                    navController.navigate(Screen.VacancyList.route) {
+                        popUpTo(Screen.RoadmapSkills.route) { inclusive = true }
+                    }
+                },
+                onNavigateToTests = {
+                    navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.RoadmapSkills.route) { inclusive = true }
+                    }
+                },
+                onNavigateToProfile = {
+                    navController.navigate(Screen.Profile.route) {
+                        popUpTo(Screen.RoadmapSkills.route) { inclusive = true }
+                    }
                 }
             )
         }
@@ -305,6 +381,11 @@ fun NavGraph(navController: NavHostController) {
                 },
                 onNavigateToTests = {
                     navController.navigate(Screen.TestList.route) {
+                        popUpTo(Screen.Profile.route) { inclusive = true }
+                    }
+                },
+                onNavigateToRoadmap = {
+                    navController.navigate(Screen.RoadmapStats.route) {
                         popUpTo(Screen.Profile.route) { inclusive = true }
                     }
                 },

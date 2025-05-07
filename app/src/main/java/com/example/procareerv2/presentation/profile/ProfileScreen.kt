@@ -44,6 +44,7 @@ fun ProfileScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToVacancies: () -> Unit,
     onNavigateToTests: () -> Unit,
+    onNavigateToRoadmap: () -> Unit,
     onLogout: () -> Unit,
     viewModel: ProfileViewModel = hiltViewModel()
 ) {
@@ -348,7 +349,7 @@ fun ProfileScreen(
 
             // Roadmap button
             Button(
-                onClick = { /* Navigate to roadmap */ },
+                onClick = onNavigateToRoadmap,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
