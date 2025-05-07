@@ -39,6 +39,9 @@ class PreferencesManager @Inject constructor(
         private val USER_SPECIALIZATION = stringPreferencesKey("user_specialization")
         private val USER_INTERESTS = stringPreferencesKey("user_interests")
         private val IS_FIRST_LAUNCH = booleanPreferencesKey("is_first_launch")
+        
+        // Ключ для хранения карты аватаров пользователей
+        private val USER_AVATARS_MAP = stringPreferencesKey("user_avatars_map")
         private val gson = Gson()
     }
 
@@ -50,7 +53,43 @@ class PreferencesManager @Inject constructor(
         dataStore.data.first()[USER_TOKEN]
     }
 
+    // Получить карту аватаров пользователей
+    private suspend fun getUserAvatarsMap(): Map<String, String> {
+        val preferences = dataStore.data.first()
+        val avatarsMapJson = preferences[USER_AVATARS_MAP] ?: "{}"
+        val avatarsMapType = object : TypeToken<Map<String, String>>() {}.type
+        return gson.fromJson(avatarsMapJson, avatarsMapType) ?: mapOf()
+    }
+    
+    // Сохранить карту аватаров пользователей
+    private suspend fun saveUserAvatarsMap(avatarsMap: Map<String, String>) {
+        dataStore.edit { preferences ->
+            preferences[USER_AVATARS_MAP] = gson.toJson(avatarsMap)
+        }
+    }
+    
+    // Сохранить аватар для конкретного пользователя
+    suspend fun saveUserAvatar(userId: Int, avatarPath: String?) {
+        val avatarsMap = getUserAvatarsMap().toMutableMap()
+        if (avatarPath != null) {
+            avatarsMap[userId.toString()] = avatarPath
+        } else {
+            avatarsMap.remove(userId.toString())
+        }
+        saveUserAvatarsMap(avatarsMap)
+    }
+    
+    // Получить аватар для конкретного пользователя
+    suspend fun getUserAvatar(userId: Int): String? {
+        return getUserAvatarsMap()[userId.toString()]
+    }
+    
     suspend fun saveUser(user: User) {
+        // Сохраняем аватар пользователя в карте аватаров, если он есть
+        if (user.profileImage != null) {
+            saveUserAvatar(user.id, user.profileImage)
+        }
+        
         dataStore.edit { preferences ->
             preferences[USER_ID] = user.id.toString()
             preferences[USER_NAME] = user.name
@@ -150,8 +189,28 @@ class PreferencesManager @Inject constructor(
     }
 
     suspend fun clearUser() {
+        // Сохраняем карту аватаров пользователей, но удаляем остальные данные
+        val avatarsMap = getUserAvatarsMap()
+        
         dataStore.edit { preferences ->
-            preferences.clear() // Очищаем все данные пользователя
+            preferences.remove(USER_ID)
+            preferences.remove(USER_NAME)
+            preferences.remove(USER_EMAIL)
+            preferences.remove(USER_TOKEN)
+            preferences.remove(USER_PROFILE_IMAGE)
+            preferences.remove(USER_POSITION)
+            preferences.remove(USER_SPECIALIZATION)
+            preferences.remove(USER_INTERESTS)
+        }
+        
+        // Восстанавливаем карту аватаров
+        saveUserAvatarsMap(avatarsMap)
+    }
+    
+    suspend fun resetAllData() {
+        // Полная очистка всех данных, включая карту аватаров
+        dataStore.edit { preferences ->
+            preferences.clear()
         }
     }
 

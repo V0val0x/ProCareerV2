@@ -1,11 +1,13 @@
 package com.example.procareerv2.presentation.profile
 
+import android.content.Context
 import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.procareerv2.data.local.PreferencesManager
 import com.example.procareerv2.domain.model.Interest
+import dagger.hilt.android.qualifiers.ApplicationContext
 
 import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.domain.repository.AuthRepository
@@ -33,7 +35,8 @@ data class ProfileUiState(
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
-    private val preferencesManager: PreferencesManager
+    private val preferencesManager: PreferencesManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val defaultUser = User(
@@ -55,9 +58,18 @@ class ProfileViewModel @Inject constructor(
             // Загружаем начальные данные из DataStore
             val storedUser = preferencesManager.getUserFlow().first()
             if (storedUser != null) {
-                _uiState.update { it.copy(user = storedUser, interests = storedUser.interests) }
+                // Проверяем, есть ли аватар для текущего пользователя в карте аватаров
+                val userAvatar = preferencesManager.getUserAvatar(storedUser.id)
+                val userWithAvatar = if (userAvatar != null && (storedUser.profileImage == null || storedUser.profileImage.isBlank())) {
+                    Log.d("ProfileViewModel", "Found avatar for user ${storedUser.id}: $userAvatar")
+                    storedUser.copy(profileImage = userAvatar)
+                } else {
+                    storedUser
+                }
+                
+                _uiState.update { it.copy(user = userWithAvatar, interests = userWithAvatar.interests) }
                 // Immediately fetch updated profile data from server
-                fetchUserProfile(storedUser.id)
+                fetchUserProfile(userWithAvatar.id)
             } else {
                 Log.d("ProfileViewModel", "No stored user found, using default")
                 _uiState.update { it.copy(user = defaultUser) }
@@ -85,17 +97,47 @@ class ProfileViewModel @Inject constructor(
             _uiState.update { it.copy(isLoading = true, error = null) }
             try {
                 Log.d("ProfileViewModel", "Fetching user profile from server for ID: $userId")
+                
+                // Сначала проверяем, есть ли сохраненный аватар для данного пользователя
+                val savedAvatar = preferencesManager.getUserAvatar(userId)
+                Log.d("ProfileViewModel", "Saved avatar for user $userId: $savedAvatar")
+                
                 val result = authRepository.fetchUserProfile(userId)
                 result.onSuccess { user ->
                     Log.d("ProfileViewModel", "Profile fetched successfully: ${user.name}")
+                    
+                    // Применяем сохраненный аватар, если он есть и сервер не вернул аватар
+                    val updatedUser = if (savedAvatar != null && (user.profileImage == null || user.profileImage.isBlank())) {
+                        Log.d("ProfileViewModel", "Applying saved avatar to user ${user.id}: $savedAvatar")
+                        user.copy(profileImage = savedAvatar)
+                    } else {
+                        if (user.profileImage != null) {
+                            // Если сервер вернул аватар, сохраняем его в карту
+                            preferencesManager.saveUserAvatar(user.id, user.profileImage)
+                            Log.d("ProfileViewModel", "Saved new avatar from server for user ${user.id}: ${user.profileImage}")
+                        }
+                        user
+                    }
+                    
+                    // Проверяем, есть ли специализация. Если нет, используем текущую из UI
+                    val currentState = _uiState.value
+                    val finalUser = if (updatedUser.specialization.isNullOrBlank() && 
+                                      currentState.user?.specialization?.isNotBlank() == true) {
+                        Log.d("ProfileViewModel", "Keeping current specialization: ${currentState.user?.specialization}")
+                        updatedUser.copy(specialization = currentState.user?.specialization)
+                    } else {
+                        updatedUser
+                    }
+                    
                     _uiState.update { it.copy(
-                        user = user,
-                        interests = user.interests,
+                        user = finalUser,
+                        interests = finalUser.interests,
                         isLoading = false,
                         error = null
                     )}
+                    
                     // Сохраняем обновленные данные в DataStore
-                    preferencesManager.saveUser(user)
+                    preferencesManager.saveUser(finalUser)
                 }.onFailure { error ->
                     Log.e("ProfileViewModel", "Failed to fetch profile: ${error.message}")
                     _uiState.update { it.copy(
@@ -168,30 +210,55 @@ class ProfileViewModel @Inject constructor(
                 val currentUser = uiState.value.user ?: throw Exception("Пользователь не найден")
                 Log.d("ProfileViewModel", "Current user: ${currentUser.id}, ${currentUser.name}")
                 
-                // Создаем обновленного пользователя с новыми данными, сохраняя существующую картинку профиля
+                // Обрабатываем изображение профиля, если оно было изменено
+                var profileImagePath = currentUser.profileImage
+                if (profileImage != null) {
+                    // Сохраняем новое изображение
+                    profileImagePath = com.example.procareerv2.util.ImageUtils.saveImageToInternalStorage(context, profileImage)
+                    
+                    // Сохраняем в карте аватаров по ID пользователя
+                    preferencesManager.saveUserAvatar(currentUser.id, profileImagePath)
+                    Log.d("ProfileViewModel", "Saved profile image for user ${currentUser.id}: $profileImagePath")
+                } else {
+                    // Пытаемся загрузить аватар из карты аватаров
+                    val savedAvatar = preferencesManager.getUserAvatar(currentUser.id)
+                    if (savedAvatar != null && (profileImagePath == null || profileImagePath.isBlank())) {
+                        profileImagePath = savedAvatar
+                        Log.d("ProfileViewModel", "Loaded saved avatar for user ${currentUser.id}: $profileImagePath")
+                    }
+                }
+                
+                // Создаем обновленного пользователя с новыми данными
                 val updatedUser = currentUser.copy(
                     name = name,
                     position = position,
-                    specialization = specialization
-                    // Обратите внимание: profileImage из Uri теперь не передается,
-                    // так как сервер не принимает этот параметр
+                    specialization = specialization,
+                    profileImage = profileImagePath
                 )
                 
                 Log.d("ProfileViewModel", "Sending update to repository for user ID: ${updatedUser.id}")
                 val result = authRepository.updateUserProfile(updatedUser)
                 
                 result.onSuccess { user ->
-                    Log.d("ProfileViewModel", "Profile updated successfully: ${user.name}")
+                    // Сохраняем изображение профиля в обновленном пользователе
+                    val userWithImage = if (profileImagePath != null && user.profileImage == null) {
+                        // Если сервер не вернул изображение, используем локальное
+                        user.copy(profileImage = profileImagePath)
+                    } else {
+                        user
+                    }
+                    
+                    Log.d("ProfileViewModel", "Profile updated successfully: ${userWithImage.name}")
                     _uiState.update { it.copy(
-                        user = user,
-                        interests = user.interests,
+                        user = userWithImage,
+                        interests = userWithImage.interests,
                         isLoading = false,
                         error = null,
                         showEditProfileDialog = false
                     )}
                     
                     // Сохраняем обновленные данные в локальное хранилище
-                    preferencesManager.saveUser(user)
+                    preferencesManager.saveUser(userWithImage)
                     
                     // Обновляем данные с сервера после успешного обновления профиля
                     refreshUserProfile()

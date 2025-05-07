@@ -42,6 +42,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.procareerv2.domain.model.User
+import com.example.procareerv2.presentation.profile.ProfileViewModel
 
 data class OnboardingPage(
     val image: Int,
@@ -54,7 +58,8 @@ data class OnboardingPage(
 fun OnboardingScreen(
     onNavigateToLogin: () -> Unit,
     onSkip: () -> Unit,
-    onNavigateToHome: () -> Unit
+    onNavigateToHome: () -> Unit,
+    profileViewModel: ProfileViewModel = hiltViewModel()
 ) {
     val pages = listOf(
         OnboardingPage(
@@ -205,11 +210,57 @@ fun OnboardingScreen(
                     }
                 },
                 confirmButton = {
+                    var isUpdating by remember { mutableStateOf(false) }
+                    
                     Button(onClick = {
-                        showProfessionDialog.value = false
-                        onNavigateToHome()
-                    }) {
-                        Text("OK")
+                        // Get the chosen specialization
+                        val specialization = if (selectedProfession.value == "Other" && customProfession.isNotBlank()) {
+                            customProfession
+                        } else {
+                            selectedProfession.value
+                        }
+                        
+                        // Update user profile with specialization
+                        isUpdating = true
+                        val currentUser = profileViewModel.uiState.value.user
+                        if (currentUser != null) {
+                            coroutineScope.launch {
+                                try {
+                                    // Используем доступный в ViewModel метод с корректными параметрами
+                                    profileViewModel.updateUserProfile(
+                                        name = currentUser.name,
+                                        position = currentUser.position ?: "",
+                                        specialization = specialization, 
+                                        profileImage = null
+                                    )
+                                    // Завершаем процесс независимо от результата
+                                    isUpdating = false
+                                    showProfessionDialog.value = false
+                                    onNavigateToHome()
+                                } catch (e: Exception) {
+                                    // Even if update fails, still navigate
+                                    isUpdating = false
+                                    showProfessionDialog.value = false
+                                    onNavigateToHome()
+                                }
+                            }
+                        } else {
+                            // If user isn't available, just navigate
+                            isUpdating = false
+                            showProfessionDialog.value = false
+                            onNavigateToHome()
+                        }
+                    },
+                    enabled = !isUpdating) {
+                        if (isUpdating) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Text("OK")
+                        }
                     }
                 }
             )
@@ -285,15 +336,15 @@ fun PageIndicator(
 }
 
 val IT_PROFESSIONS = listOf(
-    "Android-разработчик",
-    "iOS-разработчик",
-    "QA-инженер",
-    "DevOps-инженер",
+    "Android",
+    "iOS",
+    "QA Engineer",
+    "DevOps",
     "Data Scientist",
-    "Frontend-разработчик",
-    "Backend-разработчик",
-    "Fullstack-разработчик",
+    "Frontend",
+    "Backend",
+    "Fullstack",
     "Product Manager",
     "UI/UX Designer",
-    "Другое"
+    "Other"
 )

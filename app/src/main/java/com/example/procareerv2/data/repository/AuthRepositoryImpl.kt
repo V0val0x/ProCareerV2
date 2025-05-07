@@ -31,8 +31,13 @@ class AuthRepositoryImpl @Inject constructor(
             Log.d("AuthRepository", "Login response received: success=${response.data.token.isNotBlank()}")
             
             if (response.data.token.isNotBlank()) {
+                // Сервер возвращает id как user_id при логине
+                val userId = response.data.user_id
+                Log.d("AuthRepository", "Login successful, received user_id=$userId")
+                
                 val user = User(
-                    id = response.data.user_id,
+                    // Используем user_id из ответа API
+                    id = userId,
                     name = "", // Имя будет заполнено при получении профиля
                     email = email,
                     token = response.data.token
@@ -67,7 +72,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val response = authApi.register(RegisterRequest(name, email, password))
             val user = User(
-                id = response.data.user_id,
+                id = response.data.id, // Используем id вместо user_id, т.к. сервер возвращает правильный id
                 name = name,
                 email = email,
                 token = response.data.token
@@ -183,9 +188,19 @@ class AuthRepositoryImpl @Inject constructor(
                     
                     // Преобразуем ответ в доменную модель
                     val updatedUser = response.toDomainUser(currentUser!!.token)
-                    Log.d("AuthRepository", "Profile fetched successfully: name=${updatedUser.name}, email=${updatedUser.email}")
-                    preferencesManager.saveUser(updatedUser)
-                    return@withContext Result.success(updatedUser)
+                    
+                    // Проверка и исправление имени пользователя
+                    val finalUser = if (updatedUser.name.isBlank()) {
+                        // Если имя пустое, используем имя из текущего пользователя
+                        Log.d("AuthRepository", "User name is blank, using current user name: ${currentUser.name}")
+                        updatedUser.copy(name = currentUser.name)
+                    } else {
+                        updatedUser
+                    }
+                    
+                    Log.d("AuthRepository", "Profile fetched successfully: id=${finalUser.id}, name=${finalUser.name}, email=${finalUser.email}")
+                    preferencesManager.saveUser(finalUser)
+                    return@withContext Result.success(finalUser)
                 } catch (e: Exception) {
                     Log.e("AuthRepository", "API request failed: ${e.javaClass.simpleName}: ${e.message}")
                     // Dump the stack trace for debugging

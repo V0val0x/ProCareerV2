@@ -285,6 +285,8 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
+            // Закомментировано: раздел с резюме
+            /*
             // Resume card
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -338,6 +340,7 @@ fun ProfileScreen(
             }
 
             Spacer(modifier = Modifier.height(24.dp))
+            */
 
 
 

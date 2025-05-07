@@ -12,8 +12,29 @@ data class UserProfileResponse(
     @SerializedName("position") val position: String? = null,
     @SerializedName("grade") val grade: String? = null,
     @SerializedName("specialization") val specialization: String? = null,
-    @SerializedName("interests") val interests: List<InterestDto> = emptyList()
+    @SerializedName("interests") private val _interests: Any? = null
 ) {
+    // Интересы могут приходить как список строк или как список объектов
+    val interests: List<Interest>
+        get() {
+            return when (_interests) {
+                is List<*> -> {
+                    (_interests as List<*>).mapNotNull { item ->
+                        when (item) {
+                            is String -> Interest(id = 0, name = item) // Если строка
+                            is Map<*, *> -> {
+                                val id = (item["id"] as? Number)?.toInt() ?: 0
+                                val name = item["name"] as? String ?: return@mapNotNull null
+                                Interest(id = id, name = name)
+                            }
+                            is InterestDto -> item.toDomainInterest()
+                            else -> null
+                        }
+                    }
+                }
+                else -> emptyList()
+            }
+        }
     fun toDomainUser(token: String): User {
         return User(
             id = id,
@@ -23,7 +44,7 @@ data class UserProfileResponse(
             profileImage = profileImage,
             position = position ?: grade,  // If position is null, use grade
             specialization = specialization,
-            interests = interests.map { it.toDomainInterest() }
+            interests = interests // Теперь interests уже типа List<Interest>
         )
     }
 }
