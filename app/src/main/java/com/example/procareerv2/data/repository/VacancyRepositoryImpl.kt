@@ -12,12 +12,13 @@ class VacancyRepositoryImpl @Inject constructor(
     override suspend fun getVacancies(): Result<List<Vacancy>> {
         return try {
             val response = vacancyApi.getVacancies()
-            val vacancies = response.data.map { dto ->
+            val vacancies = response.map { dto ->
                 Vacancy(
                     id = dto.id,
                     title = dto.title,
                     grade = dto.grade,
-                    //tags = dto.tags,
+                    url = dto.url,
+                    employer_name = dto.employer_name,
                     description = dto.description,
                     responsibilities = dto.responsibilities,
                     requirements = dto.requirements,

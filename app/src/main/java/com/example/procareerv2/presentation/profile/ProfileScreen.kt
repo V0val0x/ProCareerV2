@@ -213,7 +213,7 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Position
+            // Грейд
             Text(
                 text = uiState.user?.position ?: "Front-end разработчик",
                 style = MaterialTheme.typography.titleMedium,

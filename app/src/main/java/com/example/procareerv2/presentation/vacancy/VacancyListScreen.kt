@@ -179,6 +179,16 @@ fun VacancyItem(
                         ),
                         color = MaterialTheme.colorScheme.primary
                     )
+                    
+                    // Отображаем название работодателя, если оно есть
+                    vacancy.employer_name?.let { employer ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = employer,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(8.dp))
 

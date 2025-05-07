@@ -61,8 +61,8 @@ class VacancyListViewModel @Inject constructor(
 
         val filtered = currentVacancies.filter { vacancy ->
             vacancy.title.contains(query, ignoreCase = true) ||
-                    //vacancy.tags.any { it.contains(query, ignoreCase = true) } ||
-                    vacancy.grade.contains(query, ignoreCase = true)
+                    vacancy.grade.contains(query, ignoreCase = true) ||
+                    (vacancy.employer_name?.contains(query, ignoreCase = true) == true)
         }
 
         _uiState.update { it.copy(filteredVacancies = filtered) }

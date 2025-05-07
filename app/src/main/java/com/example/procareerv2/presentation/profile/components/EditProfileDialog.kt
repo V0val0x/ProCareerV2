@@ -214,7 +214,7 @@ fun EditProfileDialog(
                 OutlinedTextField(
                     value = position,
                     onValueChange = { position = it },
-                    label = { Text("Должность") },
+                    label = { Text("Грейд") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
