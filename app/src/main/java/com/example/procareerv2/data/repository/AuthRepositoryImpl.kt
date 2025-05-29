@@ -10,6 +10,7 @@ import com.example.procareerv2.data.remote.dto.UserProfileRequest
 import com.example.procareerv2.domain.model.Interest
 import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.domain.repository.AuthRepository
+import com.example.procareerv2.domain.repository.VacancyRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
@@ -21,8 +22,36 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val preferencesManager: PreferencesManager,
-    private val externalScope: CoroutineScope
+    private val externalScope: CoroutineScope,
+    private val vacancyRepository: VacancyRepository
 ) : AuthRepository {
+
+    /**
+     * Приватная функция для парсинга вакансий по специализации пользователя
+     * Запускает асинхронный процесс парсинга вакансий, не блокирует основной поток
+     */
+    private fun parseVacanciesForUser(user: User) {
+        // Проверяем, что у пользователя есть специализация
+        val specialization = user.specialization
+        if (!specialization.isNullOrBlank()) {
+            externalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                try {
+                    Log.d("AuthRepository", "Запускаем парсинг вакансий по специализации: $specialization")
+                    vacancyRepository.parseHhVacancies(specialization, 100)
+                        .onSuccess { vacancies ->
+                            Log.d("AuthRepository", "Успешно получено ${vacancies.size} вакансий по специализации")
+                        }
+                        .onFailure { error ->
+                            Log.e("AuthRepository", "Ошибка при парсинге вакансий: ${error.message}")
+                        }
+                } catch (e: Exception) {
+                    Log.e("AuthRepository", "Исключение при парсинге вакансий: ${e.message}")
+                }
+            }
+        } else {
+            Log.d("AuthRepository", "Парсинг вакансий не запущен: специализация пользователя не указана")
+        }
+    }
 
     override suspend fun login(email: String, password: String): Result<User> {
         return try {
@@ -49,7 +78,10 @@ class AuthRepositoryImpl @Inject constructor(
                 externalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
                     try {
                         Log.d("AuthRepository", "Fetching user profile after successful login")
-                        fetchUserProfile(user.id)
+                        fetchUserProfile(user.id).onSuccess { updatedUser ->
+                            // Запускаем парсинг вакансий по специализации после успешного получения профиля
+                            parseVacanciesForUser(updatedUser)
+                        }
                     } catch (e: Exception) {
                         // Игнорируем ошибки при получении профиля, т.к. основная задача - авторизация
                         // и она уже успешно выполнена
@@ -78,6 +110,10 @@ class AuthRepositoryImpl @Inject constructor(
                 token = response.data.token
             )
             preferencesManager.saveUser(user)
+            
+            // При регистрации не запускаем парсинг сразу, т.к. специализация ещё не указана
+            // Парсинг будет запущен после обновления профиля с указанием специализации
+            
             Result.success(user)
         } catch (e: Exception) {
             Result.failure(e)
@@ -154,6 +190,10 @@ class AuthRepositoryImpl @Inject constructor(
                 
                 // Сохраняем обновленные данные локально
                 preferencesManager.saveUser(updatedUser)
+                
+                // Запускаем парсинг вакансий после обновления профиля, особенно если обновилась специализация
+                parseVacanciesForUser(updatedUser)
+                
                 Result.success(updatedUser)
             } catch (e: Exception) {
                 Log.e("AuthRepository", "Error updating profile: ${e.message}")

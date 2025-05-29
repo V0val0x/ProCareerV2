@@ -174,8 +174,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideAuthRepository(authApi: AuthApi, preferencesManager: PreferencesManager, externalScope: CoroutineScope): AuthRepository {
-        return AuthRepositoryImpl(authApi, preferencesManager, externalScope)
+    fun provideAuthRepository(
+        authApi: AuthApi, 
+        preferencesManager: PreferencesManager, 
+        externalScope: CoroutineScope,
+        vacancyRepository: VacancyRepository
+    ): AuthRepository {
+        return AuthRepositoryImpl(authApi, preferencesManager, externalScope, vacancyRepository)
     }
 
     @Provides

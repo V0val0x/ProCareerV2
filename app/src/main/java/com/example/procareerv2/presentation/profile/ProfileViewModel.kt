@@ -231,8 +231,8 @@ class ProfileViewModel @Inject constructor(
                 // Создаем обновленного пользователя с новыми данными
                 val updatedUser = currentUser.copy(
                     name = name,
-                    position = position,
-                    specialization = specialization,
+                    position = position.lowercase(),
+                    specialization = specialization.lowercase(),
                     profileImage = profileImagePath
                 )
                 
