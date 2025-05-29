@@ -319,6 +319,15 @@ fun RoadmapSkillItem(
         else -> Color(0xFF4CAF50)                  // Green for low
     }
     
+    // Определить текст и цвет для необязательности навыка
+    val requirementText = if (skill.isOptional) "Дополнительно" else "Обязательно"
+    
+    val requirementColor = if (skill.isOptional) {
+        Color(0xFF03A9F4) // Blue for optional
+    } else {
+        Color(0xFFE53935) // Red for required
+    }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -385,17 +394,17 @@ fun RoadmapSkillItem(
                         modifier = Modifier.weight(1f)
                     )
                     
-                    // Importance indicator pill
+                    // Requirement indicator pill (optional vs required)
                     Box(
                         modifier = Modifier
                             .clip(RoundedCornerShape(12.dp))
-                            .background(importanceColor.copy(alpha = 0.15f))
-                            .border(1.dp, importanceColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                            .background(requirementColor.copy(alpha = 0.15f))
+                            .border(1.dp, requirementColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                             .padding(horizontal = 8.dp, vertical = 4.dp)
                     ) {
                         Text(
-                            text = importanceText,
-                            color = importanceColor,
+                            text = requirementText,
+                            color = requirementColor,
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.Medium
                         )

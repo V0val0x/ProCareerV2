@@ -50,7 +50,8 @@ data class ApiSkillDto(
     @SerializedName("skill_id") val skillId: Int,
     @SerializedName("parent_id") val parentId: Int?,
     @SerializedName("skill_name") val skillName: String,
-    @SerializedName("status") val status: String = "not_started"
+    @SerializedName("status") val status: String = "not_started",
+    @SerializedName("is_optional") val isOptional: Boolean = false
 ) {
     fun toSkillDto(): SkillDto {
         return SkillDto(
@@ -59,6 +60,7 @@ data class ApiSkillDto(
             importance = 50, // API не предоставляет важность, используем среднее значение
             description = "", // API не предоставляет описание навыка
             status = status,
+            isOptional = isOptional,
             relatedSkills = emptyList() // API не предоставляет связанные навыки
         )
     }
@@ -88,6 +90,7 @@ data class SkillDto(
     @SerializedName("importance") val importance: Int,
     @SerializedName("description") val description: String,
     @SerializedName("status") val status: String = "not_started",
+    @SerializedName("isOptional") val isOptional: Boolean = false,
     @SerializedName("related_skills") val relatedSkills: List<Int> = emptyList()
 ) {
     fun toDomainModel(): RoadmapSkill {
@@ -101,6 +104,7 @@ data class SkillDto(
                 "learned" -> NodeStatus.LEARNED
                 else -> NodeStatus.NOT_STARTED
             },
+            isOptional = isOptional,
             relatedSkills = relatedSkills
         )
     }

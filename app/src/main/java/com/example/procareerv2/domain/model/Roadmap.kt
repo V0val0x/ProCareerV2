@@ -27,6 +27,7 @@ data class RoadmapSkill(
     val importance: Int, // 1-100
     val description: String,
     val status: NodeStatus = NodeStatus.NOT_STARTED, // Статус изучения навыка
+    val isOptional: Boolean = false, // Является ли навык необязательным
     val relatedSkills: List<Int> = emptyList() // IDs of related skills
 )
 
