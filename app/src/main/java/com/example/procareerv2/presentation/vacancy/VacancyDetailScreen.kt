@@ -2,28 +2,27 @@ package com.example.procareerv2.presentation.vacancy
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Link
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
@@ -53,7 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VacancyDetailScreen(
     vacancyId: Int,
@@ -79,7 +78,7 @@ fun VacancyDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            Icons.Default.ArrowBack,
+                            imageVector = Icons.Default.ArrowBack,
                             contentDescription = "Back",
                             tint = Color.White
                         )
@@ -113,7 +112,7 @@ fun VacancyDetailScreen(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Загрузка...")
+                    Text(text = "Загрузка...")
                 }
             } else if (uiState.error != null) {
                 // Error state
@@ -135,164 +134,235 @@ fun VacancyDetailScreen(
                             .padding(16.dp)
                             .verticalScroll(scrollState)
                     ) {
-                        // Header with title and level
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(RoundedCornerShape(16.dp))
-                                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                                .padding(16.dp)
+                        // Заголовок вакансии
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                         ) {
-                            Text(
-                                text = vacancy.title,
-                                style = MaterialTheme.typography.headlineMedium.copy(
-                                    fontWeight = FontWeight.Bold
-                                ),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(
-                                        when (vacancy.grade) {
-                                            "Intern" -> MaterialTheme.colorScheme.secondary
-                                            "Junior" -> MaterialTheme.colorScheme.tertiary
-                                            else -> MaterialTheme.colorScheme.primary
-                                        }
-                                    )
-                                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = vacancy.grade,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White
-                                )
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        // Название работодателя
-                        vacancy.employer_name?.let { employer ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
+                            Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 8.dp)
+                                    .padding(20.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Business,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
+                                // Название вакансии
                                 Text(
-                                    text = employer,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    text = vacancy.title,
+                                    style = MaterialTheme.typography.headlineMedium.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurface
                                 )
+                                
+                                Spacer(modifier = Modifier.height(16.dp))
+                                
+                                // Уровень вакансии
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(
+                                            when (vacancy.grade) {
+                                                "Intern" -> MaterialTheme.colorScheme.secondary
+                                                "Junior" -> MaterialTheme.colorScheme.tertiary
+                                                "Middle" -> Color(0xFF4CAF50) // Green
+                                                "Senior" -> Color(0xFFE53935) // Red
+                                                else -> MaterialTheme.colorScheme.primary
+                                            }
+                                        )
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = vacancy.grade,
+                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = Color.White
+                                    )
+                                }
+                                
+                                // Работодатель если есть
+                                if (!vacancy.employer_name.isNullOrBlank()) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(
+                                            imageVector = Icons.Default.Business,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = vacancy.employer_name,
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                                
+                                // Опыт работы согласно грейду
+                                Spacer(modifier = Modifier.height(12.dp))
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(
+                                        imageVector = Icons.Default.AttachMoney,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = "Опыт: ${vacancy.grade}",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
-                            
-                            Divider(
-                                modifier = Modifier.padding(vertical = 12.dp),
-                                thickness = 1.dp,
-                                color = MaterialTheme.colorScheme.outlineVariant
-                            )
                         }
                         
-                        // URL вакансии
-                        val context = LocalContext.current
-                        vacancy.url?.let { url ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // URL вакансии если есть
+                        if (!vacancy.url.isNullOrBlank()) {
+                            val context = LocalContext.current
                             OutlinedButton(
                                 onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(vacancy.url))
                                     context.startActivity(intent)
                                 },
                                 modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f))
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Link,
                                     contentDescription = null
                                 )
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Открыть вакансию на сайте")
+                                Text(
+                                    text = "Открыть вакансию на сайте",
+                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                )
                             }
                             
                             Spacer(modifier = Modifier.height(16.dp))
                         }
-
-                        // Description
-                        Text(
-                            text = "Описание:",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
                         
-                        vacancy.description?.let { description ->
+                        // Описание вакансии
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(20.dp)) {
+                                Text(
+                                    text = "Описание вакансии",
+                                    style = MaterialTheme.typography.headlineSmall.copy(
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                
+                                Divider(
+                                    modifier = Modifier.padding(vertical = 12.dp),
+                                    thickness = 1.dp,
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                                )
+                                
+                                if (!vacancy.description.isNullOrBlank()) {
+                                    Text(
+                                        text = vacancy.description,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    Text(
+                                        text = "Описание отсутствует",
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                    )
+                                }
+                            }
+                        }
+                        
+                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        // Дополнительные секции если есть
+                        if (vacancy.responsibilities != null && vacancy.responsibilities.isNotEmpty()) {
                             Card(
                                 modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
                                 colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surface
-                                ),
-                                elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-                                shape = RoundedCornerShape(12.dp)
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.15f)
+                                )
                             ) {
-                                Column(modifier = Modifier.padding(16.dp)) {
-                                    // Разбиваем описание на параграфы
-                                    val paragraphs = description.split("\n\n", "  ")
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Text(
+                                        text = "Обязанности",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
                                     
-                                    paragraphs.forEachIndexed { index, paragraph ->
-                                        if (index > 0 && paragraph.isNotBlank()) {
-                                            Spacer(modifier = Modifier.height(12.dp))
-                                        }
-                                        
-                                        if (paragraph.isNotBlank()) {
-                                            // Проверяем, является ли параграф заголовком
-                                            if (paragraph.endsWith(":") || paragraph.uppercase() == paragraph) {
-                                                Text(
-                                                    text = paragraph.trim(),
-                                                    style = MaterialTheme.typography.titleSmall.copy(
-                                                        fontWeight = FontWeight.Bold
-                                                    ),
-                                                    color = MaterialTheme.colorScheme.primary
-                                                )
-                                            } else if (paragraph.trim().startsWith("-") || paragraph.trim().startsWith("•")) {
-                                                // Пункт списка
-                                                Row(
-                                                    modifier = Modifier.padding(start = 8.dp)
-                                                ) {
-                                                    Text(
-                                                        text = "•",
-                                                        style = MaterialTheme.typography.bodyMedium,
-                                                        modifier = Modifier.padding(end = 8.dp)
-                                                    )
-                                                    Text(
-                                                        text = paragraph.trim().removePrefix("-").removePrefix("•").trim(),
-                                                        style = MaterialTheme.typography.bodyMedium
-                                                    )
-                                                }
-                                            } else {
-                                                Text(
-                                                    text = paragraph.trim(),
-                                                    style = MaterialTheme.typography.bodyMedium
-                                                )
-                                            }
-                                        }
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    // Выводим список обязанностей
+                                    vacancy.responsibilities.forEach { responsibility ->
+                                        Text(
+                                            text = "\u2022 $responsibility",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(bottom = 4.dp)
+                                        )
                                     }
                                 }
                             }
-
-                            Spacer(modifier = Modifier.height(24.dp))
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
                         }
-
-                        Spacer(modifier = Modifier.height(16.dp))
+                        
+                        if (vacancy.requirements != null && vacancy.requirements.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.15f)
+                                )
+                            ) {
+                                Column(modifier = Modifier.padding(20.dp)) {
+                                    Text(
+                                        text = "Требования",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                    
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    
+                                    // Выводим список требований
+                                    vacancy.requirements.forEach { requirement ->
+                                        Text(
+                                            text = "\u2022 $requirement",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.padding(bottom = 4.dp)
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                        }
+                        
+                        Spacer(modifier = Modifier.height(32.dp))
                     }
                 }
             }

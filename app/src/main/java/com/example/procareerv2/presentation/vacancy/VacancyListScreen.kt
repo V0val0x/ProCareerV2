@@ -160,88 +160,131 @@ fun VacancyItem(
             .fillMaxWidth()
             .clickable(onClick = onClick),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
+            // Заголовок вакансии с выделением
+            Text(
+                text = vacancy.title,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.Bold
+                ),
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            // Карточка с информацией о компании и грейдом
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .padding(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                // Информация о компании
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = vacancy.title,
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    
                     // Отображаем название работодателя, если оно есть
                     vacancy.employer_name?.let { employer ->
-                        Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = employer,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                fontWeight = FontWeight.Medium
+                            ),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(
-                                when (vacancy.grade) {
-                                    "Intern" -> MaterialTheme.colorScheme.secondary
-                                    "Junior" -> MaterialTheme.colorScheme.tertiary
-                                    else -> MaterialTheme.colorScheme.primary
-                                }
-                            )
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = vacancy.grade,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Color.White
+                }
+                
+                // Индикатор уровня/грейда
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(12.dp))
+                        .background(
+                            when (vacancy.grade) {
+                                "Intern" -> MaterialTheme.colorScheme.secondary
+                                "Junior" -> MaterialTheme.colorScheme.tertiary
+                                "Middle" -> Color(0xFF4CAF50) // Green
+                                "Senior" -> Color(0xFFE53935) // Red
+                                else -> MaterialTheme.colorScheme.primary
+                            }
                         )
+                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                ) {
+                    Text(
+                        text = vacancy.grade,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = Color.White
+                    )
+                }
+            }
+            
+            // Добавляем информацию о технологиях, если они есть
+            vacancy.technologies?.let { techList ->
+                if (techList.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Показываем первые 3 технологии
+                    val visibleTechs = techList.take(3)
+                    
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Отображаем первые 3 технологии
+                        for (tech in visibleTechs) {
+                            TechItem(tech = tech.trim())
+                        }
+                        
+                        // Если технологий больше 3, показываем индикатор
+                        if (techList.size > 3) {
+                            MoreTechIndicator(count = techList.size - 3)
+                        }
                     }
                 }
-
-                Text(
-                    text = "Смотреть",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.SemiBold
-                    ),
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                /*vacancy.tags.forEach { tag ->
-                    Box(
-                        modifier = Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
-                            .padding(horizontal = 8.dp, vertical = 4.dp)
-                    ) {
-                        Text(
-                            text = tag,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
-                }*/
             }
         }
+    }
+}
+
+@Composable
+private fun TechItem(tech: String) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = tech,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onPrimaryContainer
+        )
+    }
+}
+
+@Composable
+private fun MoreTechIndicator(count: Int) {
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+        Text(
+            text = "+$count",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
