@@ -3,6 +3,7 @@ package com.example.procareerv2.presentation.vacancy
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,8 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.ui.res.painterResource
+import com.example.procareerv2.R
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Link
@@ -46,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -205,11 +209,11 @@ fun VacancyDetailScreen(
                                 // Опыт работы согласно грейду
                                 Spacer(modifier = Modifier.height(12.dp))
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.AttachMoney,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(24.dp)
+                                    Image(
+                                        painter = painterResource(id = R.drawable.exp),
+                                        contentDescription = "Опыт работы",
+                                        modifier = Modifier.size(24.dp),
+                                        colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.primary)
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
@@ -258,7 +262,8 @@ fun VacancyDetailScreen(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.surface
                             ),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+                            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
                         ) {
                             Column(modifier = Modifier.padding(20.dp)) {
                                 Text(

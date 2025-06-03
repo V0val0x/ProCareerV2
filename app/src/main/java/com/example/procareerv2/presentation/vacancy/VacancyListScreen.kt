@@ -1,6 +1,8 @@
 package com.example.procareerv2.presentation.vacancy
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -10,16 +12,22 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Card
+import androidx.compose.material3.Divider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -40,9 +48,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.domain.model.Vacancy
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
@@ -158,97 +172,127 @@ fun VacancyItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
+            .padding(vertical = 6.dp)
             .clickable(onClick = onClick),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        shape = RoundedCornerShape(14.dp),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceVariant),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
-            // Заголовок вакансии с выделением
-            Text(
-                text = vacancy.title,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.primary
+        // Цветовой акцент слева
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .width(6.dp)
+                    .fillMaxHeight()
+                    .background(
+                        when (vacancy.grade) {
+                            "Intern" -> Color(0xFF00BCD4) // Turquoise/Teal
+                            "Junior" -> Color(0xFF4CAF50) // Green
+                            "Middle" -> Color(0xFFE91E63) // Pink
+                            "Senior" -> Color(0xFF673AB7) // Deep Purple
+                            else -> MaterialTheme.colorScheme.primary
+                        }
+                    )
+                    .align(Alignment.CenterStart)
             )
             
-            Spacer(modifier = Modifier.height(8.dp))
-            
-            // Карточка с информацией о компании и грейдом
-            Row(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
-                    .padding(12.dp),
-                verticalAlignment = Alignment.CenterVertically
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 12.dp)
             ) {
-                // Информация о компании
-                Column(modifier = Modifier.weight(1f)) {
-                    // Отображаем название работодателя, если оно есть
-                    vacancy.employer_name?.let { employer ->
+                // Заголовок вакансии
+                Text(
+                    text = vacancy.title,
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 0.sp
+                    ),
+                    color = MaterialTheme.colorScheme.primary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                
+                Spacer(modifier = Modifier.height(8.dp))
+                
+                // Информация о работодателе и грейд
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+                    // Информация о работодателе
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(
+                            imageVector = Icons.Default.Business,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = employer,
-                            style = MaterialTheme.typography.bodyLarge.copy(
-                                fontWeight = FontWeight.Medium
-                            ),
+                            text = vacancy.employer_name ?: "",
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
-                
-                // Индикатор уровня/грейда
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(
-                            when (vacancy.grade) {
-                                "Intern" -> Color(0xFF00BCD4) // Turquoise/Teal
-                                "Junior" -> Color(0xFF4CAF50) // Green
-                                "Middle" -> Color(0xFFE91E63) // Pink
-                                "Senior" -> Color(0xFF673AB7) // Deep Purple
-                                else -> MaterialTheme.colorScheme.primary
-                            }
-                        )
-                        .padding(horizontal = 12.dp, vertical = 6.dp)
-                ) {
-                    Text(
-                        text = vacancy.grade,
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = Color.White
-                    )
-                }
-            }
-            
-            // Добавляем информацию о технологиях, если они есть
-            vacancy.technologies?.let { techList ->
-                if (techList.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(12.dp))
                     
-                    // Показываем первые 3 технологии
-                    val visibleTechs = techList.take(3)
-                    
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    // Грейд вакансии
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(14.dp))
+                            .background(
+                                when (vacancy.grade) {
+                                    "Intern" -> Color(0xFF00BCD4) // Turquoise/Teal
+                                    "Junior" -> Color(0xFF4CAF50) // Green
+                                    "Middle" -> Color(0xFFE91E63) // Pink
+                                    "Senior" -> Color(0xFF673AB7) // Deep Purple
+                                    else -> MaterialTheme.colorScheme.primary
+                                }
+                            )
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
                     ) {
-                        // Отображаем первые 3 технологии
-                        for (tech in visibleTechs) {
-                            TechItem(tech = tech.trim())
-                        }
+                        Text(
+                            text = vacancy.grade,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                letterSpacing = 0.5.sp
+                            ),
+                            color = Color.White
+                        )
+                    }
+                }              
+                Spacer(modifier = Modifier.height(6.dp))
+                
+                // Добавляем информацию о технологиях, если они есть
+                vacancy.technologies?.let { techList ->
+                    if (techList.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(8.dp))
                         
-                        // Если технологий больше 3, показываем индикатор
-                        if (techList.size > 3) {
-                            MoreTechIndicator(count = techList.size - 3)
+                        // Разделитель
+                        Divider(
+                            modifier = Modifier.fillMaxWidth(),
+                            thickness = 0.5.dp,
+                            color = MaterialTheme.colorScheme.outlineVariant
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Список технологий
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                            maxItemsInEachRow = Int.MAX_VALUE
+                        ) { // Отображаем первые 3 технологии
+                            val visibleTechs = techList.take(3)
+                            for (tech in visibleTechs) {
+                                TechItem(tech = tech.trim())
+                            }
+                            
+                            // Если технологий больше 3, показываем индикатор
+                            if (techList.size > 3) {
+                                MoreTechIndicator(count = techList.size - 3)
+                            }
                         }
                     }
                 }
@@ -258,17 +302,24 @@ fun VacancyItem(
 }
 
 @Composable
-private fun TechItem(tech: String) {
+fun TechItem(tech: String) {
     Box(
         modifier = Modifier
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f))
-            .padding(horizontal = 8.dp, vertical = 4.dp)
+            .clip(RoundedCornerShape(6.dp))
+            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.2f))
+            .border(
+                width = 1.dp,
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 8.dp, vertical = 3.dp)
     ) {
         Text(
             text = tech,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onPrimaryContainer
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }
