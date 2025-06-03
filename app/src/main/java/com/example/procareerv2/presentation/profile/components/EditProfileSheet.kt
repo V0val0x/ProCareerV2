@@ -24,7 +24,7 @@ import com.example.procareerv2.domain.model.Interest
 fun EditProfileSheet(
     interests: List<Interest>,
     onAddInterest: (String) -> Unit,
-    onDeleteInterest: (Int) -> Unit,
+    onDeleteInterest: (String) -> Unit,
     onStartEditingInterest: (Interest) -> Unit,
     editingInterest: Interest?,
     onDismiss: () -> Unit
@@ -144,7 +144,7 @@ fun EditProfileSheet(
                     if (editingInterest?.id != interest.id) {
                         InterestItem(
                             interest = interest,
-                            onDelete = { onDeleteInterest(interest.id) },
+                            onDelete = { onDeleteInterest(interest.name) },
                             onClick = { onStartEditingInterest(interest) }
                         )
                     }

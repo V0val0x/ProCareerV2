@@ -380,9 +380,11 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun deleteInterest(id: Int) {
+    // Удаление интереса по имени вместо ID
+    fun deleteInterest(name: String) {
         viewModelScope.launch {
-            val updatedInterests = uiState.value.interests.filterNot { it.id == id }
+            android.util.Log.d("ProfileViewModel", "Удаление интереса по имени: $name")
+            val updatedInterests = uiState.value.interests.filterNot { it.name == name }
             val updatedUser = uiState.value.user?.copy(interests = updatedInterests)
             if (updatedUser != null) {
                 // Save to local storage first

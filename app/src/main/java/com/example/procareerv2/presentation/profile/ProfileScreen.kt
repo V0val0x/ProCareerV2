@@ -214,20 +214,20 @@ fun ProfileScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Грейд
+            // Грейд (отображаем с большой буквы)
             Text(
-                text = uiState.user?.position ?: "Front-end разработчик",
+                text = (uiState.user?.position ?: "Front-end разработчик").replaceFirstChar { it.uppercase() },
                 style = MaterialTheme.typography.titleMedium,
                 color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth()
             )
 
-            // Specialization (if available)
+            // Specialization (if available, отображаем с большой буквы)
             if (!uiState.user?.specialization.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = uiState.user?.specialization ?: "",
+                    text = (uiState.user?.specialization ?: "").replaceFirstChar { it.uppercase() },
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.secondary,
                     textAlign = TextAlign.Center,
