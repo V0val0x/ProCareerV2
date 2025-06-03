@@ -294,7 +294,7 @@ fun RoadmapStatsScreen(
                             Spacer(modifier = Modifier.height(8.dp))
                             
                             Text(
-                                "Начните с основных навыков, прежде чем переходить к более сложным. Отмечайте прогресс, чтобы отслеживать свое развитие.",
+                                "Начните с обязательных навыков, прежде чем переходить к дополнительным и более сложным. Отмечайте прогресс, чтобы отслеживать свое развитие.",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )

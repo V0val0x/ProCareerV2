@@ -210,10 +210,10 @@ fun VacancyItem(
                         .clip(RoundedCornerShape(12.dp))
                         .background(
                             when (vacancy.grade) {
-                                "Intern" -> MaterialTheme.colorScheme.secondary
-                                "Junior" -> MaterialTheme.colorScheme.tertiary
-                                "Middle" -> Color(0xFF4CAF50) // Green
-                                "Senior" -> Color(0xFFE53935) // Red
+                                "Intern" -> Color(0xFF00BCD4) // Turquoise/Teal
+                                "Junior" -> Color(0xFF4CAF50) // Green
+                                "Middle" -> Color(0xFFE91E63) // Pink
+                                "Senior" -> Color(0xFF673AB7) // Deep Purple
                                 else -> MaterialTheme.colorScheme.primary
                             }
                         )
