@@ -1,6 +1,7 @@
 package com.example.procareerv2.di
 
 import com.example.procareerv2.data.local.PreferencesManager
+import com.example.procareerv2.data.local.UserPreferencesManager
 import com.example.procareerv2.data.remote.api.AuthApi
 import com.example.procareerv2.data.remote.api.RoadmapApi
 import com.example.procareerv2.data.remote.api.TestApi
@@ -177,10 +178,11 @@ object NetworkModule {
     fun provideAuthRepository(
         authApi: AuthApi, 
         preferencesManager: PreferencesManager, 
+        userPreferencesManager: UserPreferencesManager,
         externalScope: CoroutineScope,
         vacancyRepository: VacancyRepository
     ): AuthRepository {
-        return AuthRepositoryImpl(authApi, preferencesManager, externalScope, vacancyRepository)
+        return AuthRepositoryImpl(authApi, preferencesManager, userPreferencesManager, externalScope, vacancyRepository)
     }
 
     @Provides

@@ -89,24 +89,21 @@ fun RegisterScreen(
             .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Фиксированная верхняя часть - одинаковая для обоих экранов
-        Spacer(modifier = Modifier.height(48.dp)) // Фиксированный отступ сверху
+        // Верхняя часть с логотипом (аналогично LoginScreen)
+        Spacer(modifier = Modifier.height(48.dp))
 
-        // Логотип - фиксированный размер и отступы
+        // Логотип - фиксированный размер, такой же как в LoginScreen
         Image(
             painter = painterResource(id = R.drawable.logo2),
             contentDescription = "App Logo",
-            modifier = Modifier
-                .size(160.dp)
-                .padding(bottom = 16.dp)
+            modifier = Modifier.size(240.dp)
         )
 
-        Spacer(modifier = Modifier.height(40.dp)) // Фиксированный отступ
+        Spacer(modifier = Modifier.height(32.dp))
 
-        // Вкладки - фиксированное положение
+        // Вкладки - фиксированное положение, такое же как в LoginScreen
         TabRow(
             selectedTabIndex = selectedTabIndex,
-            containerColor = MaterialTheme.colorScheme.background,
             contentColor = MaterialTheme.colorScheme.primary
         ) {
             Tab(

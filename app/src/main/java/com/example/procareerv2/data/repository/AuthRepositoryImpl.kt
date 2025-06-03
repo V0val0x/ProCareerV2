@@ -2,6 +2,7 @@ package com.example.procareerv2.data.repository
 
 import android.util.Log
 import com.example.procareerv2.data.local.PreferencesManager
+import com.example.procareerv2.data.local.UserPreferencesManager
 import com.example.procareerv2.data.remote.api.AuthApi
 import com.example.procareerv2.data.remote.dto.InterestDto
 import com.example.procareerv2.data.remote.dto.LoginRequest
@@ -22,6 +23,7 @@ import javax.inject.Inject
 class AuthRepositoryImpl @Inject constructor(
     private val authApi: AuthApi,
     private val preferencesManager: PreferencesManager,
+    private val userPreferencesManager: UserPreferencesManager,
     private val externalScope: CoroutineScope,
     private val vacancyRepository: VacancyRepository
 ) : AuthRepository {
@@ -126,6 +128,8 @@ class AuthRepositoryImpl @Inject constructor(
 
     override suspend fun logout() {
         preferencesManager.clearUser()
+        userPreferencesManager.clearCredentials()
+        Log.d("AuthRepository", "Logout: user data and login credentials cleared")
     }
 
     override suspend fun isLoggedIn(): Boolean {

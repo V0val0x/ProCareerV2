@@ -78,13 +78,24 @@ class UserPreferencesManager @Inject constructor(
         Log.d("UserPreferences", "Checking valid credentials: email=$email, rememberMe=$rememberMe, isValid=$isValid")
         isValid
     }
-
+    
+    /**
+     * Очищает сохраненные учетные данные пользователя
+     * Вызывается при выходе из аккаунта для предотвращения автоматического входа
+     */
     suspend fun clearCredentials() {
-        Log.d("UserPreferences", "Clearing all credentials")
-        dataStore.edit { preferences ->
-            preferences.remove(KEY_EMAIL)
-            preferences.remove(KEY_PASSWORD)
-            preferences.remove(KEY_REMEMBER_ME)
+        Log.d("UserPreferences", "Clearing saved credentials")
+        try {
+            withContext(NonCancellable) {
+                dataStore.edit { preferences ->
+                    preferences.remove(KEY_EMAIL)
+                    preferences.remove(KEY_PASSWORD)
+                    preferences[KEY_REMEMBER_ME] = false
+                }
+            }
+            Log.d("UserPreferences", "Credentials cleared successfully")
+        } catch (e: Exception) {
+            Log.e("UserPreferences", "Error clearing credentials: ${e.message}", e)
         }
     }
 }
