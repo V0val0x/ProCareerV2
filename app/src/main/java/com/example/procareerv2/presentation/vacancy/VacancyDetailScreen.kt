@@ -54,6 +54,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,14 +67,36 @@ fun VacancyDetailScreen(
     onNavigateToVacancies: () -> Unit,
     onNavigateToTests: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    viewModel: VacancyDetailViewModel = hiltViewModel()
+    // Удаляем создание viewModel по умолчанию, чтобы явно создать его в теле функции
 ) {
+    // Создаем key, основанный на ID вакансии, чтобы у каждой вакансии был свой экземпляр ViewModel
+    val viewModelKey = "vacancy_detail_$vacancyId"
+    android.util.Log.d("VacancyDetailScreen", "Создание ViewModel с ключом: $viewModelKey для vacancyId=$vacancyId")
+    
+    // Используем hiltViewModel с ключом, зависящим от ID вакансии
+    val viewModel = hiltViewModel<VacancyDetailViewModel>(
+        key = viewModelKey
+    )
+    
     val uiState by viewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     var selectedTab by remember { mutableStateOf(1) } // Вакансии - вкладка 1
 
-    LaunchedEffect(key1 = vacancyId) {
-        viewModel.loadVacancy(vacancyId)
+    // Проверка, что ID вакансии передан корректно
+    if (vacancyId <= 0) {
+        android.util.Log.e("VacancyDetailScreen", "[ОШИБКА] Получен некорректный ID вакансии: $vacancyId")
+        LaunchedEffect(Unit) {
+            // Возврат назад при некорректном ID
+            onNavigateBack()
+        }
+    } else {
+        // Когда vacancyId меняется, или при первом запуске
+        LaunchedEffect(key1 = vacancyId) {
+            android.util.Log.d("VacancyDetailScreen", "[ЗАГРУЗКА] LaunchedEffect сработал для vacancyId=$vacancyId с viewModelKey=$viewModelKey")
+            // Using 1 as a temporary userId value
+            // In a production app, you should get the actual user ID from a UserRepository or SessionManager
+            viewModel.loadVacancy(vacancyId, userId = 1)
+        }
     }
 
     Scaffold(

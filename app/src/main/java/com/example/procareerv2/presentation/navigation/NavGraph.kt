@@ -159,7 +159,14 @@ fun NavGraph(navController: NavHostController) {
         composable(Screen.VacancyList.route) {
             VacancyListScreen(
                 onNavigateToVacancyDetail = { vacancyId ->
-                    navController.navigate("vacancy_detail/$vacancyId")
+                    // Логируем ID вакансии при навигации к экрану деталей
+                    Log.d("NavGraph", "[НАВИГАЦИЯ] Навигация к экрану деталей вакансии с ID: $vacancyId")
+                    
+                    // Формируем явный маршрут с ID вакансии
+                    val route = "vacancy_detail/$vacancyId"
+                    Log.d("NavGraph", "[НАВИГАЦИЯ] Сформирован маршрут: $route")
+                    
+                    navController.navigate(route)
                 },
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {
@@ -185,11 +192,27 @@ fun NavGraph(navController: NavHostController) {
                 navArgument("vacancyId") { type = NavType.IntType }
             )
         ) { backStackEntry ->
-            val vacancyId = backStackEntry.arguments?.getInt("vacancyId") ?: -1
+            // Извлекаем ID вакансии из аргументов навигации
+            val vacancyId = backStackEntry.arguments?.getInt("vacancyId")
+            
+            // Проверка на null и на положительное значение
+            if (vacancyId == null || vacancyId <= 0) {
+                Log.e("NavGraph", "[ОШИБКА] Получен некорректный ID вакансии: $vacancyId. Возврат к списку вакансий.")
+                LaunchedEffect(Unit) {
+                    navController.popBackStack()
+                }
+                return@composable
+            }
+            
+            Log.d("NavGraph", "[НАВИГАЦИЯ] Навигация к экрану деталей вакансии с ID: $vacancyId")
+            
+            // Уникальный ключ с ID вакансии для предотвращения переиспользования ViewModel
+            val route = "vacancy_detail/$vacancyId"
+            
             VacancyDetailScreen(
                 vacancyId = vacancyId,
                 onNavigateBack = {
-                    navController.navigateUp()
+                    navController.popBackStack()
                 },
                 onNavigateToHome = {
                     navController.navigate(Screen.Home.route) {

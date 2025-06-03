@@ -9,7 +9,7 @@ data class VacancyListResponse(
 )
 
 data class VacancyDto(
-    val id: Int,
+    val vacancy_id: Int, // Обновлено с 'id' на 'vacancy_id' для соответствия API
     val title: String,
     val grade: String,
     val url: String? = null,
