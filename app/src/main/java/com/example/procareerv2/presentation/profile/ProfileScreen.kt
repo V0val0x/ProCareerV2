@@ -386,7 +386,10 @@ fun ProfileScreen(
 
             // Logout button
             OutlinedButton(
-                onClick = onLogout,
+                onClick = {
+                    viewModel.logout()
+                    onLogout()
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

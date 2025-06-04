@@ -123,12 +123,26 @@ fun LoginScreen(
             Tab(
                 selected = selectedTabIndex == 0,
                 onClick = { selectedTabIndex = 0 },
-                text = { Text("Вход") }
+                text = { 
+                    Text(
+                        "Войти",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = if (selectedTabIndex == 0) FontWeight.Bold else FontWeight.Normal
+                        )
+                    )
+                }
             )
             Tab(
                 selected = selectedTabIndex == 1,
                 onClick = { onNavigateToRegister() },
-                text = { Text("Регистрация") }
+                text = { 
+                    Text(
+                        "Регистрация",
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = if (selectedTabIndex == 1) FontWeight.Bold else FontWeight.Normal
+                        )
+                    )
+                }
             )
         }
 

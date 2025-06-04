@@ -127,16 +127,21 @@ class AuthRepositoryImpl @Inject constructor(
     }
 
     override suspend fun logout() {
-        preferencesManager.clearUser()
-        userPreferencesManager.clearCredentials()
-        Log.d("AuthRepository", "Logout: user data and login credentials cleared")
+        try {
+            // Очищаем все данные пользователя
+            preferencesManager.resetAllData()
+            // Очищаем учетные данные
+            userPreferencesManager.clearCredentials()
+            Log.d("AuthRepository", "Logout: all user data and login credentials cleared")
+        } catch (e: Exception) {
+            Log.e("AuthRepository", "Error during logout: ${e.message}")
+        }
     }
 
     override suspend fun isLoggedIn(): Boolean {
-        return preferencesManager.getUser() != null
+        val user = preferencesManager.getUser()
+        return user != null && user.token.isNotBlank()
     }
-
-
 
     override suspend fun updateUserInterests(interests: List<Interest>): Result<User> {
         return try {

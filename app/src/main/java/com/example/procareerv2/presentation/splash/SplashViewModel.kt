@@ -56,15 +56,7 @@ class SplashViewModel @Inject constructor(
                     return@launch
                 }
                 
-                // Then check if user is already logged in locally
-                val isAlreadyLoggedIn = authRepository.isLoggedIn()
-                if (isAlreadyLoggedIn) {
-                    Log.d("SplashViewModel", "User is already logged in locally")
-                    _authState.value = AuthState.Authenticated
-                    return@launch
-                }
-                
-                // Finally check for saved credentials
+                // Проверяем сохраненные учетные данные
                 val credentials = try {
                     userPreferencesManager.getSavedCredentials().first()
                 } catch (e: Exception) {
@@ -90,7 +82,7 @@ class SplashViewModel @Inject constructor(
                         _authState.value = AuthState.Unauthenticated
                     }
                 } else {
-                    Log.d("SplashViewModel", "No valid saved credentials")
+                    Log.d("SplashViewModel", "No valid saved credentials, user needs to login")
                     _authState.value = AuthState.Unauthenticated
                 }
             } catch (e: Exception) {

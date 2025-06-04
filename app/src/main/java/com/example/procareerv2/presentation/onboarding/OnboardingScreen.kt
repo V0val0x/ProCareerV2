@@ -7,16 +7,19 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
@@ -46,6 +49,14 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.domain.model.User
 import com.example.procareerv2.presentation.profile.ProfileViewModel
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.withTransform
 
 data class OnboardingPage(
     val image: Int,
@@ -95,6 +106,7 @@ fun OnboardingScreen(
     var selectedProfession = remember { mutableStateOf(IT_PROFESSIONS[0]) }
     var onboardingFinished = remember { mutableStateOf(false) }
     var customProfession by rememberSaveable { mutableStateOf("") }
+    var isUpdating by remember { mutableStateOf(false) }
 
     fun finishOnboarding() {
         showProfessionDialog.value = true
@@ -105,17 +117,21 @@ fun OnboardingScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.primary)
     ) {
-        // Skip button (поверх всего)
-        TextButton(
+        // Skip/Finish button (поверх всего)
+        Button(
             onClick = { finishOnboarding() },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(top = 32.dp, end = 16.dp)
-                .zIndex(2f)
+                .zIndex(2f),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.secondary
+            )
         ) {
             Text(
-                text = "Пропустить",
-                color = Color.White
+                text = if (pagerState.currentPage == pages.size - 1) "Завершить" else "Пропустить",
+                color = Color.White,
+                style = MaterialTheme.typography.titleMedium
             )
         }
 
@@ -134,34 +150,64 @@ fun OnboardingScreen(
         Column(
             modifier = Modifier
                 .align(Alignment.BottomCenter)
+                .fillMaxWidth()
                 .padding(bottom = 64.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             // Page indicators
             PageIndicator(
                 pageCount = pages.size,
                 currentPage = pagerState.currentPage,
-                modifier = Modifier.padding(16.dp)
+                modifier = Modifier.padding(vertical = 16.dp)
             )
 
             // Next button
-            Button(
-                onClick = {
-                    if (pagerState.currentPage < pages.size - 1) {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    } else {
-                        finishOnboarding()
-                    }
-                },
+            val progress = (pagerState.currentPage + 1).toFloat() / pages.size
+            val animatedProgress by animateFloatAsState(
+                targetValue = progress,
+                label = "onboarding_progress"
+            )
+            val secondaryColor = MaterialTheme.colorScheme.secondary
+            Box(
                 modifier = Modifier
-                    .padding(16.dp)
+                    .size(90.dp),
+                contentAlignment = Alignment.Center
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.next),
-                    contentDescription = "Далее"
-                )
+                Canvas(modifier = Modifier.fillMaxSize()) {
+                    val stroke = 8.dp.toPx()
+                    drawArc(
+                        color = secondaryColor,
+                        startAngle = -90f,
+                        sweepAngle = 360f * animatedProgress,
+                        useCenter = false,
+                        style = Stroke(width = stroke, cap = StrokeCap.Round)
+                    )
+                }
+                Button(
+                    onClick = {
+                        if (pagerState.currentPage < pages.size - 1) {
+                            coroutineScope.launch {
+                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                            }
+                        } else {
+                            finishOnboarding()
+                        }
+                    },
+                    modifier = Modifier
+                        .size(70.dp),
+                    shape = CircleShape,
+                    contentPadding = PaddingValues(0.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFE0E0E0)
+                    )
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.next),
+                        contentDescription = "Далее",
+                        modifier = Modifier.size(40.dp)
+                    )
+                }
             }
         }
 
@@ -210,11 +256,9 @@ fun OnboardingScreen(
                     }
                 },
                 confirmButton = {
-                    var isUpdating by remember { mutableStateOf(false) }
-                    
                     Button(onClick = {
                         // Get the chosen specialization
-                        val specialization = if (selectedProfession.value == "Other" && customProfession.isNotBlank()) {
+                        val specialization = if (selectedProfession.value == "Другое" && customProfession.isNotBlank()) {
                             customProfession
                         } else {
                             selectedProfession.value
@@ -274,25 +318,35 @@ fun OnboardingPageContent(
     modifier: Modifier = Modifier
 ) {
     Column(
-        modifier = modifier.padding(16.dp),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Image(
-            painter = painterResource(id = page.image),
-            contentDescription = null,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(320.dp)
-                .padding(bottom = 32.dp)
-        )
-
+                .height(220.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Image(
+                painter = painterResource(id = page.image),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth(0.95f)
+                    .fillMaxHeight(),
+            )
+        }
+        Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = page.title,
             style = MaterialTheme.typography.headlineMedium,
             color = Color.White,
             textAlign = TextAlign.Center,
-            modifier = Modifier.padding(horizontal = 16.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
         )
 
         if (page.description.isNotEmpty()) {
@@ -301,7 +355,9 @@ fun OnboardingPageContent(
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color.White.copy(alpha = 0.8f),
                 textAlign = TextAlign.Center,
-                modifier = Modifier.padding(top = 16.dp, start = 32.dp, end = 32.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 16.dp, start = 32.dp, end = 32.dp)
             )
         }
     }

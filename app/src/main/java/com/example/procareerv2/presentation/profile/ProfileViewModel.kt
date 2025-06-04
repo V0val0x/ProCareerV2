@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.procareerv2.data.local.PreferencesManager
+import com.example.procareerv2.data.local.UserPreferencesManager
 import com.example.procareerv2.domain.model.Interest
 import dagger.hilt.android.qualifiers.ApplicationContext
 
@@ -36,6 +37,7 @@ data class ProfileUiState(
 class ProfileViewModel @Inject constructor(
     private val authRepository: AuthRepository,
     private val preferencesManager: PreferencesManager,
+    private val userPreferencesManager: UserPreferencesManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -157,10 +159,19 @@ class ProfileViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
-            authRepository.logout()
-            // Очищаем состояние UI
-            _uiState.update { 
-                ProfileUiState() // Сбрасываем все состояние к начальному
+            try {
+                // Очищаем сохранённые учетные данные
+                userPreferencesManager.clearCredentials()
+                // Выполняем выход через репозиторий
+                authRepository.logout()
+                // Очищаем состояние UI
+                _uiState.update { 
+                    ProfileUiState() // Сбрасываем все состояние к начальному
+                }
+                Log.d("ProfileViewModel", "Logout completed successfully")
+            } catch (e: Exception) {
+                Log.e("ProfileViewModel", "Error during logout: ${e.message}")
+                _uiState.update { it.copy(error = "Ошибка при выходе из аккаунта") }
             }
         }
     }
