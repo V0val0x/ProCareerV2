@@ -260,12 +260,11 @@ fun VacancyItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(IntrinsicSize.Min)
             .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFF8F9FC) // Светло-голубой фон как на скриншоте
+            containerColor = Color(0xFFF8F9FC)
         )
     ) {
         Column(
@@ -277,22 +276,20 @@ fun VacancyItem(
             Text(
                 text = vacancy.title,
                 style = MaterialTheme.typography.titleLarge,
-                color = Color(0xFF3F51B5), // Синий цвет как на скриншоте
+                color = Color(0xFF3F51B5),
                 fontWeight = FontWeight.Bold,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis
             )
-            
             Spacer(modifier = Modifier.height(12.dp))
-            
             // Нижняя часть с компанией и уровнем
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Компания с иконкой
                 Row(
+                    modifier = Modifier.weight(1f),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -306,31 +303,43 @@ fun VacancyItem(
                         text = vacancy.employer_name ?: "Компания",
                         style = MaterialTheme.typography.bodyLarge,
                         color = Color.Gray,
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
                 }
-                
                 // Уровень (grade) с цветным фоном
-                val gradeColor = when(vacancy.grade.lowercase()) {
-                    "junior" -> Color(0xFF4CAF50)  // Зеленый
-                    "middle" -> Color(0xFFE91E63)  // Розовый
-                    "intern" -> Color(0xFF00BCD4)  // Голубой
-                    else -> Color(0xFF9E9E9E)      // Серый по умолчанию
+                val gradeColor = when(vacancy.grade.trim().lowercase()) {
+                    "junior" -> Color(0xFF4CAF50)
+                    "middle" -> Color(0xFFE91E63)
+                    "intern" -> Color(0xFF00BCD4)
+                    "senior" -> Color(0xFF673AB7)
+                    else -> Color(0xFF9E9E9E)
                 }
-                
                 Card(
                     shape = RoundedCornerShape(20.dp),
                     colors = CardDefaults.cardColors(
                         containerColor = gradeColor
-                    )
+                    ),
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .defaultMinSize(minWidth = 64.dp)
+                        .height(IntrinsicSize.Min),
                 ) {
-                    Text(
-                        text = vacancy.grade,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        color = Color.White,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Bold
-                    )
+                    Box(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = vacancy.grade,
+                            color = Color.White,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip
+                        )
+                    }
                 }
             }
         }

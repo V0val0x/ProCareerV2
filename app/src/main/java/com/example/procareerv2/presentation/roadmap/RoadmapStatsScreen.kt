@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.example.procareerv2.presentation.common.components.ProCareerBottomBar
+import com.example.procareerv2.presentation.test.TestListViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -56,14 +57,17 @@ fun RoadmapStatsScreen(
     onNavigateToVacancies: () -> Unit,
     onNavigateToTests: () -> Unit,
     onNavigateToProfile: () -> Unit,
-    viewModel: RoadmapStatsViewModel = hiltViewModel()
+    viewModel: RoadmapStatsViewModel = hiltViewModel(),
+    testListViewModel: TestListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val testUiState by testListViewModel.uiState.collectAsState()
     val scrollState = rememberScrollState()
     var selectedTab by remember { mutableStateOf(0) } // Roadmap - tab 0 (custom)
 
     LaunchedEffect(key1 = true) {
         viewModel.loadRoadmapStats()
+        testListViewModel.loadTests()
     }
 
     Scaffold(
@@ -227,7 +231,7 @@ fun RoadmapStatsScreen(
                                     .padding(horizontal = 16.dp, vertical = 8.dp)
                             ) {
                                 Text(
-                                    text = "${uiState.roadmapStats?.testsCompleted ?: 0} из ${uiState.roadmapStats?.totalTests ?: 0}",
+                                    text = "0 из ${testUiState.tests.size}",
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = Color.White
                                 )

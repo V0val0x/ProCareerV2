@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.procareerv2.domain.model.Vacancy
 import com.example.procareerv2.domain.repository.VacancyRepository
+import com.example.procareerv2.data.local.PreferencesManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -25,14 +26,12 @@ data class VacancyListUiState(
 
 @HiltViewModel
 class VacancyListViewModel @Inject constructor(
-    private val vacancyRepository: VacancyRepository
+    private val vacancyRepository: VacancyRepository,
+    private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(VacancyListUiState(isLoading = true))
     val uiState: StateFlow<VacancyListUiState> = _uiState.asStateFlow()
-    
-    // ID пользователя (в реальном приложении должно приходить из UserRepository или AuthRepository)
-    private val userId: Int = 28
     
     // Количество вакансий на странице
     private val pageSize: Int = 10
@@ -42,8 +41,9 @@ class VacancyListViewModel @Inject constructor(
     fun loadVacancies() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
-            
-            loadVacanciesPage(1)
+            val user = preferencesManager.getUser()
+            val userId = user?.id ?: -1
+            loadVacanciesPage(1, userId)
         }
     }
     
@@ -58,11 +58,13 @@ class VacancyListViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingMore = true) }
             
-            loadVacanciesPage(currentState.currentPage + 1)
+            val user = preferencesManager.getUser()
+            val userId = user?.id ?: -1
+            loadVacanciesPage(currentState.currentPage + 1, userId)
         }
     }
     
-    private suspend fun loadVacanciesPage(page: Int) {
+    private suspend fun loadVacanciesPage(page: Int, userId: Int) {
         vacancyRepository.getVacancies(userId, page, pageSize)
             .onSuccess { newVacancies ->
                 _uiState.update { currentState ->
